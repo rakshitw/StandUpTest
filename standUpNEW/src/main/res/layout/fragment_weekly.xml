@@ -1,0 +1,15 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.xrci.standup.WeeklyActivity.WeeklyFragment">
+
+    <ListView
+        style="@style/ForecastListStyle"
+        android:id="@+id/listview_weekly"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="@null"
+        />
+
+</FrameLayout>

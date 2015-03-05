@@ -1,0 +1,79 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:cloudteams="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#000000"
+    android:orientation="vertical"
+
+    >
+
+    <com.xrci.standup.views.RectangleView
+        android:id="@+id/rectangleViewVertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="70dp"
+        cloudteams:rectangleHeight="180dp"
+        cloudteams:rectangleWidth="10dp" />
+
+    <com.xrci.standup.views.RectangleView
+        android:id="@+id/rectangleViewHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/rectangleViewVertical"
+        cloudteams:rectangleHeight="5dp"
+
+
+        cloudteams:rectangleWidth="20dp" />
+
+    <TextView
+        android:id="@+id/textViewEndTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/rectangleViewVertical"
+        android:layout_alignTop="@+id/rectangleViewVertical"
+
+        android:gravity="center"
+        android:text="00:00"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewStartTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/rectangleViewVertical"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/rectangleViewVertical"
+        android:gravity="center"
+        android:text="00:00"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <com.xrci.standup.views.CircleView
+        android:id="@+id/circleView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/rectangleViewHorizontal"
+        cloudteams:circleGap="0dp"
+        cloudteams:circleRadius="90dp"
+        cloudteams:fillColor="#00FF00"
+        cloudteams:strokeWidth="0dp"
+        cloudteams:text_line1="Try"
+        cloudteams:text_line2="Try" />
+
+    <ImageView
+        android:id="@+id/imageViewLogo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="20dp"
+        android:src="@drawable/vehicle" />
+
+</RelativeLayout>

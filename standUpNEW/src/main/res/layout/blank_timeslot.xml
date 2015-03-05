@@ -1,0 +1,21 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:cloudteams="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#000000"
+    android:orientation="vertical"
+    
+     >
+
+    <com.xrci.standup.views.RectangleView
+        android:id="@+id/rectangleViewBlank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        cloudteams:rectangleHeight="20dp"
+        cloudteams:rectangleWidth="10dp"
+        android:layout_marginLeft="70dp"
+        cloudteams:rectanglefillColor="#EFEFEF" />
+    </RelativeLayout>

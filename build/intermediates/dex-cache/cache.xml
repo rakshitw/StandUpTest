@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\StandUpNEW\facebookSDK\unspecified\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="9345b2864eaec127efad5eb1bf66a22752cc9784">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-c4071c79a5137b8da65e3cff313bbdb01cc4d08b.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.google.android.gms\play-services\6.5.87\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="dd9247ea0fabe8ee479638c4b4a23e93752be256">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-356033f997903c7ef5797c7595f67bc2b506445e.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.android.support\appcompat-v7\21.0.3\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="81d42bf983a8741f4888a6e333e454e4a5e0eeb7">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-45ee1de0a64c9ff625f8e987f60fef5073d370d5.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-8b84b21e64b39b1c771c715e49daf4009c454c70.jar" />
+    </item>
+    <item
+        jar="C:\Users\q4kv89zb\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\21.0.3\support-annotations-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="4b74cefe1f0c1b819e7260c8627a14674e37fd35">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\support-annotations-21.0.3-692c536246f3851617ab8fc49eb7e3acaa6b68bb.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\libs\internal_impl-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-cf55691f60d8f2c7c2fe1ca4b5dadd24f0238c9b.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\StandUpNEW\facebookSDK\unspecified\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="58078d208dc54f678239ca741e63cb3dddf8defa">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-19f76cc33372fca414a1bf54c84773d35e097f1e.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\StandUpNEW\facebookSDK\unspecified\libs\bolts.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="1e5ba33c837d05dcca9dc40a0ab458f8599d7aef">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\bolts-9543e736e2b702e9d67fae67d0ff9461c2b50eba.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\libs\internal_impl-21.0.3.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="01ec05bfbafcc07646ba813000bf2ef11742dd03">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-6041fcb31d17ed9f7da61fe37402d1e4b2be133f.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\StandUpNEW\facebookSDK\unspecified\libs\bolts.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="1e5ba33c837d05dcca9dc40a0ab458f8599d7aef">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\bolts-71ce7c160666c04e400c1fbd297896acbbe58ad0.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.android.support\support-v4\21.0.3\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2c91c949a45a21cdecf26e03951e46c7beec9ad8">
+        <dex dex="C:\workspace\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-09ea356d169d2ed6423a6aad582cabf3baed4aaa.jar" />
+    </item>
+    <item
+        jar="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\exploded-aar\com.google.android.gms\play-services\6.5.87\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="dd9247ea0fabe8ee479638c4b4a23e93752be256">
+        <dex dex="C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-ba8e8565068a707f38bf0408f57b9392f7ae0ef8.jar" />
+    </item>
+
+</items>

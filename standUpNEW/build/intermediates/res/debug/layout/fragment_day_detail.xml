@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:cloudteams="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#08090A"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/linearLayoutCurrentActivity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+
+        <com.xrci.standup.views.CircleView
+            android:id="@+id/circleViewCurrent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            cloudteams:circleGap="0dp"
+            cloudteams:circleRadius="40dp"
+            cloudteams:fillColor="#15A083"
+            cloudteams:strokeWidth="0dp"
+            cloudteams:text_line1="0"
+            cloudteams:text_line2="steps" />
+
+
+    </LinearLayout>
+
+
+    <ScrollView
+        android:id="@+id/scrollViewMain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/linearLayoutTimelineArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+
+        </LinearLayout>
+    </ScrollView>
+
+
+</LinearLayout>
+<!-- From: file:/C:/workspace/StandUpCopy/StandUpNEW/standUpNEW/src/main/res/layout/fragment_day_detail.xml -->

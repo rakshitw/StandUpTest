@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout 
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#08090A" 
+     xmlns:android="http://schemas.android.com/apk/res/android">
+     
+      <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.15"
+       android:textAppearance="?android:attr/textAppearanceLarge"
+       android:background="#FFFFFF"
+        android:textColor="#747474"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="Settings" />
+     
+	 <TextView
+       
+        android:layout_width="wrap_content"
+         android:layout_height="0dp"
+        android:layout_weight="0.05"
+       android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="#8E8E8E"
+        android:textStyle="bold"
+        android:text="" />
+    <TextView
+        
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+       android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:text="Do Not Track Me:" />
+     
+      
+      <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+       android:layout_height="0dp"
+        android:layout_weight="0.1"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:text="  From:" />
+     
+      
+      <EditText
+        android:id="@+id/editTextStartTime"
+        android:layout_width="match_parent"
+        android:editable="false"
+        
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:ems="10"
+        android:background="#747474"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:onClick="onEditTextStartClick"
+        
+        ></EditText>
+
+    <TimePicker
+        android:id="@+id/timePickerStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" 
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:background="#FFFFFF"
+        />
+    <TextView
+        
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.05"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#8E8E8E"
+        android:textStyle="bold"
+        android:text="" />
+        <TextView
+       
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:text="  To:" />
+      
+        <EditText
+        android:id="@+id/editTextEndTime"
+        android:layout_width="match_parent"
+        android:editable="false"
+        android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:ems="10"
+        android:background="#747474"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:onClick="onEditTextEndClick"
+        
+        ></EditText>
+
+    <TimePicker
+        android:id="@+id/timePickerEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" 
+        android:visibility="gone"
+        android:background="#FFFFFF"
+        />
+
+    <CheckBox
+        android:id="@+id/checkBoxAlert"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0"
+        android:text="Alert during Workplace Timings only" 
+        android:textStyle="bold"
+        android:checked="true"
+        android:textColor="#8E8E8E"></CheckBox>
+    <TextView
+       
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.05"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#8E8E8E"
+        android:textStyle="bold"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+       android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:text="Maximum Sitting Time (in minutes):"
+         android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF" />
+  
+
+    <EditText
+        android:id="@+id/editTextMaxSittingtime"
+        android:layout_width="match_parent"
+       android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:ems="10"
+        android:inputType="number"
+         android:background="#747474"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:gravity="center">
+
+    </EditText>
+    
+    
+    <TextView
+      
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.05"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#8E8E8E"
+        android:textStyle="bold"
+        android:text="" />
+    
+     <Button
+        android:id="@+id/buttonSaveSettings"
+        android:layout_width="match_parent"
+       android:layout_height="0dp"
+        android:layout_weight="0.15"
+        android:text="Save"
+        android:layout_marginLeft="20dp" 
+        android:layout_marginRight="20dp" 
+        android:background="#FFFFFF"
+        android:textColor="#747474"
+        android:textStyle="bold"
+        android:onClick="saveSettings"/>
+     <TextView
+      
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="0.05"
+       android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textColor="#8E8E8E"
+        android:textStyle="bold"
+        android:text="" />
+
+
+
+</LinearLayout>
+
+<!-- From: file:/C:/workspace/StandUpCopy/StandUpNEW/standUpNEW/src/main/res/layout/settings_layout.xml -->

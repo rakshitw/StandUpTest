@@ -1,0 +1,8 @@
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\classes\debug
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\support-annotations-21.0.3-692c536246f3851617ab8fc49eb7e3acaa6b68bb.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\bolts-71ce7c160666c04e400c1fbd297896acbbe58ad0.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-cf55691f60d8f2c7c2fe1ca4b5dadd24f0238c9b.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-c4071c79a5137b8da65e3cff313bbdb01cc4d08b.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-45ee1de0a64c9ff625f8e987f60fef5073d370d5.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-8b84b21e64b39b1c771c715e49daf4009c454c70.jar
+C:\workspace\StandUpCopy\StandUpNEW\standUpNEW\build\intermediates\pre-dexed\debug\classes-ba8e8565068a707f38bf0408f57b9392f7ae0ef8.jar

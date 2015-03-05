@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="CircleView">
+        <attr name="strokeWidth" format="dimension"/>
+        <attr name="strokeColor" format="color"/>
+        <attr name="fillColor" format="color"/>
+        <attr name="circleRadius" format="dimension"/>
+        <attr name="circleGap" format="dimension"/>
+        <attr name="text_line1" format="string"/>
+        <attr name="text_line2" format="string"/>
+    </declare-styleable>
+    
+       <declare-styleable name="RectangleView">
+        
+        <attr name="rectanglefillColor" format="color"/>
+		<attr name="rectangleHeight" format="dimension"/>
+		<attr name="rectangleWidth" format="dimension"/>
+    </declare-styleable>
+    
+    
+    
+
+</resources>
