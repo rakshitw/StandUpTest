@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,7 +12,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -34,9 +32,6 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.DetectedActivity;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -181,41 +176,41 @@ public class StepService extends Service implements SensorEventListener {
         //Authenticate
 
 
-        JSONObject authenticateObject = new JSONObject();
-        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
-        try {
-            authenticateObject.put("userName", "Rakshit");
-            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
-            authenticateObject.put("authType", "Facebook");
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            String fbid = preferences.getString("fbid", "0");
-            Log.i(TAG, "fbid is " + fbid);
-            authenticateObject.put("authId", 1234683);
-
-
-            authenticateObject.put("typeId", 1);
-
-        } catch (JSONException e) {
-            Log.i(TAG, "JSON Exception");
-        }
-        String authenticationString = authenticateObject.toString();
-        String response = PostData.postContent(authenticationUri, authenticationString);
-        Log.i(TAG, "response is " + response);
-        Log.i(TAG, "authentication string was " + authenticationString);
-
-        try {
-            JSONObject responseObject;
-            responseObject = new JSONObject(response);
-            int userId = Integer.parseInt(responseObject.get("id").toString());
-
-            SharedPreferences preferences =
-                    PreferenceManager.getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putInt("userId", userId);
-            editor.commit();
-        } catch (JSONException e) {
-            Log.i(TAG, "response string not a JSON");
-        }
+//        JSONObject authenticateObject = new JSONObject();
+//        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
+//        try {
+//            authenticateObject.put("userName", "Rakshit");
+//            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
+//            authenticateObject.put("authType", "Facebook");
+//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//            String fbid = preferences.getString("fbid", "0");
+//            Log.i(TAG, "fbid is " + fbid);
+//            authenticateObject.put("authId", 1234683);
+//
+//
+//            authenticateObject.put("typeId", 1);
+//
+//        } catch (JSONException e) {
+//            Log.i(TAG, "JSON Exception");
+//        }
+//        String authenticationString = authenticateObject.toString();
+//        String response = PostData.postContent(authenticationUri, authenticationString);
+//        Log.i(TAG, "response is " + response);
+//        Log.i(TAG, "authentication string was " + authenticationString);
+//
+//        try {
+//            JSONObject responseObject;
+//            responseObject = new JSONObject(response);
+//            int userId = Integer.parseInt(responseObject.get("id").toString());
+//
+//            SharedPreferences preferences =
+//                    PreferenceManager.getDefaultSharedPreferences(this);
+//            SharedPreferences.Editor editor = preferences.edit();
+//            editor.putInt("userId", userId);
+//            editor.commit();
+//        } catch (JSONException e) {
+//            Log.i(TAG, "response string not a JSON");
+//        }
 
 
         Log.i(TAG, "service started");
@@ -820,31 +815,31 @@ public class StepService extends Service implements SensorEventListener {
 
     }
 
-    public String verifyAuthentication(String userName, ) {
-
-        JSONObject authenticateObject = new JSONObject();
-        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
-        try {
-            authenticateObject.put("userName", "Rakshit");
-            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
-            authenticateObject.put("authType", "Facebook");
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            String fbid = preferences.getString("fbid", "0");
-            Log.i(TAG, "fbid is " + fbid);
-            authenticateObject.put("authId", 1234683);
-
-
-            authenticateObject.put("typeId", 1);
-
-        } catch (JSONException e) {
-            Log.i(TAG, "JSON Exception");
-        }
-        String authenticationString = authenticateObject.toString();
-        String response = PostData.postContent(authenticationUri, authenticationString);
-        Log.i(TAG, "response is " + response);
-        Log.i(TAG, "authentication string was " + authenticationString);
-
-    }
+//    public String verifyAuthentication(String userName, ) {
+//
+//        JSONObject authenticateObject = new JSONObject();
+//        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
+//        try {
+//            authenticateObject.put("userName", "Rakshit");
+//            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
+//            authenticateObject.put("authType", "Facebook");
+//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//            String fbid = preferences.getString("fbid", "0");
+//            Log.i(TAG, "fbid is " + fbid);
+//            authenticateObject.put("authId", 1234683);
+//
+//
+//            authenticateObject.put("typeId", 1);
+//
+//        } catch (JSONException e) {
+//            Log.i(TAG, "JSON Exception");
+//        }
+//        String authenticationString = authenticateObject.toString();
+//        String response = PostData.postContent(authenticationUri, authenticationString);
+//        Log.i(TAG, "response is " + response);
+//        Log.i(TAG, "authentication string was " + authenticationString);
+//
+//    }
 
 
 }
