@@ -20,54 +20,14 @@ public class AuthenticationModel {
 
     private String valueUserName;
     private String valueEmail;
-    private int valueAuthType;
-    private int valueAuthID;
+    private String valueAuthType;
+    private String valueAuthID;
     private int valueTypeID;
-
-    public String getValueUserName() {
-        return valueUserName;
-    }
-
-    public void setValueUserName(String valueUserName) {
-        this.valueUserName = valueUserName;
-    }
-
-    public String getValueEmail() {
-        return valueEmail;
-    }
-
-    public void setValueEmail(String valueEmail) {
-        this.valueEmail = valueEmail;
-    }
-
-    public int getValueAuthType() {
-        return valueAuthType;
-    }
-
-    public void setValueAuthType(int valueAuthType) {
-        this.valueAuthType = valueAuthType;
-    }
-
-    public int getValueAuthID() {
-        return valueAuthID;
-    }
-
-    public void setValueAuthID(int valueAuthID) {
-        this.valueAuthID = valueAuthID;
-    }
-
-    public int getValueTypeID() {
-        return valueTypeID;
-    }
-
-    public void setValueTypeID(int valueTypeID) {
-        this.valueTypeID = valueTypeID;
-    }
 
 
     static final public String authenticationUri = "http://64.49.234.131:8080/standup/rest/user/authenticate";
 
-    public AuthenticationModel(String valueUserName, String valueEmail, int valueAuthType, int valueAuthID, int valueTypeID) {
+    public AuthenticationModel(String valueUserName, String valueEmail, String valueAuthType, String valueAuthID, int valueTypeID) {
         this.valueUserName = valueUserName;
         this.valueEmail = valueEmail;
         this.valueAuthType = valueAuthType;
@@ -90,6 +50,7 @@ public class AuthenticationModel {
             Log.i(TAG, "JSON Exception");
         }
         String authenticationString = authenticateObject.toString();
+        Log.i(TAG, "authString is " + authenticationString);
         String response = PostData.postContent(authenticationUri, authenticationString);
         return response;
     }

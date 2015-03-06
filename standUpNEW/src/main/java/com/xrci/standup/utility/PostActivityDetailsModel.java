@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -18,6 +19,7 @@ public class PostActivityDetailsModel {
     public static final String parameterUserId = "userId";
     public static final String parameterTypeID = "typeId";
     public static final String parameterSteps = "steps";
+    public static String postActivityDetailURI = "http://64.49.234.131:8080/standup/rest/activity/postActivity";
 
     private Date valueStartTime;
     private Date valueEndTime;
@@ -38,9 +40,9 @@ public class PostActivityDetailsModel {
     public JSONArray getPostActivityJSON(JSONArray jsonArray) {
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put(parameterStartTime, valueStartTime);
-
-            jsonObject.put(parameterEndTime, valueEndTime);
+            SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+            jsonObject.put(parameterStartTime, sf.format(valueStartTime));
+            jsonObject.put(parameterEndTime, sf.format(valueEndTime));
             jsonObject.put(parameterSourceId, valueSourceId);
             jsonObject.put(parameterSteps, valueSteps);
             jsonObject.put(parameterTypeID, valueTypeId);

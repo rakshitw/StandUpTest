@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -12,6 +13,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -32,6 +34,12 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.xrci.standup.utility.AuthenticationModel;
+import com.xrci.standup.utility.PostActivityDetailsModel;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -97,7 +105,9 @@ public class StepService extends Service implements SensorEventListener {
     private LocalBroadcastManager broadcaster;
     DatabaseHandler dbHandler;
 
-
+    private boolean isUserValidated = false;
+    private JSONArray entityArray;
+    private int userId;
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
      * a known auth error is being resolved, such as showing the account chooser or presenting a
@@ -126,6 +136,7 @@ public class StepService extends Service implements SensorEventListener {
     BroadcastReceiver fitResolutionBroadcastReceiver;
 
     private PowerManager.WakeLock mWakeLock;
+
 
     public StepService() {
 
@@ -174,7 +185,50 @@ public class StepService extends Service implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         //Authenticate
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor=preferences.edit();
+        String fbid = preferences.getString("fbid", "1");
+        String userName = preferences.getString("name", "default");
+        Log.i(TAG, "name is " + userName);
+        AuthenticationModel authModel = new AuthenticationModel(userName, "notAvailable","facebook", fbid, 1);
+        String response = authModel.verifyAuthentication();
+        Log.i(TAG, "authentication response is " + response);
 
+        //TODO check what to do when not authenticated, though a rare chance.
+        if(response.equals(PostData.INVALID_RESPONSE)) {
+//                 Toast.makeText(getApplicationContext(), "Make sure you are connected to internet"
+//                            ,Toast.LENGTH_SHORT).show();
+        }
+        else if(response.equals(PostData.INVALID_PAYLOAD)){
+//            Toast.makeText(getApplicationContext(), "Unable to validate user"
+//                ,Toast.LENGTH_SHORT).show();
+        }
+        else
+            isUserValidated = true;
+
+        if(isUserValidated == true) {
+            Log.i(TAG, "user id throught setUserId" + setUserId(response));
+            editor.putInt("userId", setUserId(response));
+            editor.commit();
+            Log.i(TAG, "user is validated " + userId);
+
+        }
+        else {
+            Log.i(TAG, "user not validated" + userId);
+        }
+
+
+
+
+        //initialize entityArray
+        entityArray = new JSONArray();
+//       Log.i(TAG, "entity length before send is " + entityArray.length());
+//        sendActivityDetailToServer(Calendar.getInstance().getTime(), Calendar.getInstance().getTime(),1,0);
+//        Log.i(TAG, "entity length after send is " + entityArray.length());
+
+
+//        Log.i(TAG, "is user validated " + isUserValidated );
+        Log.i(TAG, "authentication response is " + response);
 
 //        JSONObject authenticateObject = new JSONObject();
 //        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
@@ -182,10 +236,9 @@ public class StepService extends Service implements SensorEventListener {
 //            authenticateObject.put("userName", "Rakshit");
 //            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
 //            authenticateObject.put("authType", "Facebook");
-//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-//            String fbid = preferences.getString("fbid", "0");
+//
 //            Log.i(TAG, "fbid is " + fbid);
-//            authenticateObject.put("authId", 1234683);
+//            authenticateObject.put("authId", fbid);
 //
 //
 //            authenticateObject.put("typeId", 1);
@@ -194,7 +247,7 @@ public class StepService extends Service implements SensorEventListener {
 //            Log.i(TAG, "JSON Exception");
 //        }
 //        String authenticationString = authenticateObject.toString();
-//        String response = PostData.postContent(authenticationUri, authenticationString);
+//        String response = PostData.postContent(AuthenticationModel.authenticationUri, authenticationString);
 //        Log.i(TAG, "response is " + response);
 //        Log.i(TAG, "authentication string was " + authenticationString);
 //
@@ -335,15 +388,15 @@ public class StepService extends Service implements SensorEventListener {
                 //Do nothing
                 Log.i(TAG, "doing nothing for unknown");
 //                if( (curr_time.getTime() - stillStartTime.getTime()) > 3000 )
-                updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false);
+                updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
+                        , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false);
 //                PostData.postContent()
             } else {
 //            if (!hasSittingEndedByUnknown.get()) {
                 Log.i(TAG, "updating sitting UI");
 //                    if( (curr_time.getTime() - stillStartTime.getTime()) > 3000 )
-
-
                 updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime() - stillStartTime.getTime(), false, false, 0, false);
+
             }
 
 
@@ -354,11 +407,18 @@ public class StepService extends Service implements SensorEventListener {
             hasUnknownRecordingStarted.set(false);
             stillStartTime = unknownEndTime;
 //            if( (unknownEndTime.getTime() - unknownStartTime.getTime()) > 15000 ) {
-            ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.UNKNOWN, unknownEndTime.getTime() - unknownStartTime.getTime(), unknownStartTime, unknownEndTime, 0);
-            dbHandler.addUserActivity(DetectedActivity.UNKNOWN, activityDetails, 0);
-            //TODO check the parameters
 
+
+
+            ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.UNKNOWN
+                    , unknownEndTime.getTime() - unknownStartTime.getTime(), unknownStartTime, unknownEndTime, 0);
+            dbHandler.addUserActivity(DetectedActivity.UNKNOWN, activityDetails, 0);
+
+            //TODO check the parameters
             updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true);
+            //Send to server too
+            sendActivityDetailToServer(unknownStartTime,unknownEndTime,DetectedActivity.UNKNOWN, -1);
+
             Log.i(TAG, "end time for unknown is " + unknownEndTime);
 //            }
 
@@ -374,6 +434,8 @@ public class StepService extends Service implements SensorEventListener {
             ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.STILL, stillEndTime.getTime() - stillStartTime.getTime(), stillStartTime, stillEndTime, 0);
             dbHandler.addUserActivity(DetectedActivity.STILL, activityDetails, 0);
             updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true);
+            //Send to server too
+            sendActivityDetailToServer(stillStartTime,stillEndTime,DetectedActivity.STILL, 0);
             Log.i(TAG, "end time for still is " + stillEndTime);
 
 //            }
@@ -384,6 +446,8 @@ public class StepService extends Service implements SensorEventListener {
             ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.STILL, stillEndTime.getTime() - stillStartTime.getTime(), stillStartTime, stillEndTime, 0);
             dbHandler.addUserActivity(DetectedActivity.STILL, activityDetails, 0);
             updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true);
+            //Send to server too
+            sendActivityDetailToServer(stillStartTime,stillEndTime,DetectedActivity.STILL, 0);
             Log.i(TAG, "end time for still is " + stillEndTime);
 //            }
 
@@ -413,9 +477,13 @@ public class StepService extends Service implements SensorEventListener {
                         unknownEndTime.getTime() - unknownStartTime.getTime(), unknownStartTime
                         , unknownEndTime, 0);
                 dbHandler.addUserActivity(DetectedActivity.UNKNOWN, activityDetails, 0);
+
                 //TODO check the parameters
 
                 updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true);
+                //Send to server too
+                sendActivityDetailToServer(unknownStartTime,unknownEndTime,DetectedActivity.UNKNOWN, -1);
+
 //                }
 
 
@@ -445,6 +513,8 @@ public class StepService extends Service implements SensorEventListener {
             hasStepsStarted.set(false);
             hasStepRecordingStarted.set(false);
             isStill.set(true);
+            //Send to server too
+            sendActivityDetailToServer(start_time,end_time,DetectedActivity.ON_FOOT, delta_value);
         }
     }
 
@@ -731,7 +801,7 @@ public class StepService extends Service implements SensorEventListener {
             int inclination = (int) Math.round(Math.toDegrees(Math.acos(axis[2])));
 
 
-            if (inclination < 8 || inclination > 172) {
+            if (inclination < 10 || inclination > 170) {
 //                Log.i(TAG, "FLAT inclination=" + inclination);
                 onTable = true;
                 pseudoEndUnknownTime = Calendar.getInstance().getTime();
@@ -841,5 +911,66 @@ public class StepService extends Service implements SensorEventListener {
 //
 //    }
 
+    /**
+     *
+     * @param activityStartTime
+     * @param activityEndTime
+     * @param typeId
+     * @param steps
+     * makes a post call to store entity data to server
+     * and updates entity Array accordingly
+     */
 
+    private void sendActivityDetailToServer(Date activityStartTime, Date activityEndTime, int typeId, int steps) {
+        //TODO change this format at server
+        Log.i(TAG, "entity length before send  " + entityArray.length());
+//        Toast.makeText(,"entity length before send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+        //TODO remove the below type id assignment
+        typeId = 1;
+        userId = getUserId();
+        PostActivityDetailsModel postActivityDetailsModel = new PostActivityDetailsModel(
+                activityStartTime,activityEndTime,1,userId,typeId, steps);
+
+        postActivityDetailsModel.getPostActivityJSON(entityArray);
+//        Toast.makeText(getApplicationContext(),"entity length inside send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+       Log.i(TAG, "length inside send " + entityArray.length());
+        String activityPayload = entityArray.toString();
+        Log.i(TAG, "post activity payload is " + activityPayload);
+        String result  = PostData.postContent(PostActivityDetailsModel.postActivityDetailURI,activityPayload );
+        Log.i(TAG, "postActivity result is " + result);
+        if (result.equals(PostData.INVALID_PAYLOAD)) {
+            //TODO: get more than just error from server, discarding array for now
+            entityArray = new JSONArray();
+
+        } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
+            //Do nothing
+        }  else {
+            Log.i(TAG, "sent activity result is " + result);
+            entityArray = new JSONArray();
+        }
+        Log.i(TAG, "entity length after send is " + entityArray.length());
+//        Toast.makeText(getApplicationContext(),"entity length after send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+
+    }
+
+    public int setUserId(String response){
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            return jsonObject.getInt("id");
+        } catch (JSONException e) {
+            Log.i(TAG, "user id cannot be created because " + e.getMessage());
+        }
+
+
+        return 0;
+    }
+
+    public int getUserId(){
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        return preferences.getInt("userId", 0);
+
+    }
 }
