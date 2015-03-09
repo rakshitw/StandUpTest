@@ -40,13 +40,13 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
 
         View view = convertView;
 
-        if (view == null) {
+//        if (view == null) {
 
 //            LayoutInflater viewInflator;
 //            viewInflator = LayoutInflater.from(getContext());
             view = getInflatedLayout(position);
 
-        }
+//        }
 
         DayDetails day = getItem(position);
 

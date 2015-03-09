@@ -84,7 +84,7 @@ public class WeeklyFragment extends Fragment {
             else
                 day.setGoalAchieved(false);
 
-            days.add(day);
+            days.add( day);
             weeklyCount += day.getStepsTaken();
         }
         DayDetails dayAvg = new DayDetails();

@@ -28,6 +28,7 @@ import java.util.TimerTask;
 public class MainFragment extends Fragment {
 
     CircleView currentCircle;
+    CircleView stepCircle;
     TextView currentActivity, currentActivityTimePeriod;
     LinearLayout linearLayoutTimelineArea;
     Context context;
@@ -51,6 +52,7 @@ public class MainFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.main_fragment, container,
                 false);
+        stepCircle = (CircleView) view.findViewById(R.id.circleViewTodayStep);
         currentCircle = (CircleView) view.findViewById(R.id.circleViewCurrent);
         currentActivity = (TextView) view.findViewById(R.id.textViewCurrentActivity);
         currentActivityTimePeriod = (TextView) view.findViewById(R.id.textViewCurrentActivityTimePeriod);
@@ -70,11 +72,18 @@ public class MainFragment extends Fragment {
 
 
     void updateSteps(int steps) {
+
         currentCircle.setFillColor(utils.COLOR_WALK);
         currentCircle.setTextLine1(steps + "");
         currentCircle.setTextLine2("steps"); // Color for Walk
         currentCircle.invalidate();
         currentActivity.setText("On Foot");
+//        Calendar cal = GregorianCalendar.getInstance();
+//        cal.setTime(new Date());
+//        Date today = cal.getTime();
+//        int stepCount = dbHandler.getDayDataFromActivityLog(today);
+//        stepCircle.setTextLine1(stepCount + "");
+
     }
 
     void updateCurrentActivity(int activity, long timePeriod,
