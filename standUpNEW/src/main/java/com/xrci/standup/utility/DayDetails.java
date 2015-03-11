@@ -12,6 +12,16 @@ public class DayDetails {
     private int stepsRemained;
     //To be used when goals are set dynamically
     private int dayGoal;
+    private int compliance;
+
+    public int getCompliance() {
+        return compliance;
+    }
+
+    public void setCompliance(int compliance) {
+        this.compliance = compliance;
+    }
+
 
     public int getDayGoal() {
         return dayGoal;

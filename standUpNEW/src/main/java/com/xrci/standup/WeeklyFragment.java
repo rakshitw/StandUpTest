@@ -3,6 +3,7 @@ package com.xrci.standup;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ public class WeeklyFragment extends Fragment {
     private ListView mListView;
     public static final String intentFromWeekly = "intentFromWeekly";
     public static final String intentFromWeeklySteps = "weeklyIntentSteps";
+
     public WeeklyFragment() {
     }
 
@@ -41,13 +43,12 @@ public class WeeklyFragment extends Fragment {
                 if (position == 0) {
                     Intent startMain = new Intent(getActivity().getApplicationContext(), MainActivity.class);
                     startActivity(startMain);
-                }
-                else {
-                Intent intent = new Intent(getActivity().getApplicationContext(),
-                        DayDetailActivity.class).putExtra(intentFromWeekly, position)
-                        .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken());
+                } else {
+                    Intent intent = new Intent(getActivity().getApplicationContext(),
+                            DayDetailActivity.class).putExtra(intentFromWeekly, position)
+                            .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken());
 
-                startActivity(intent);
+                    startActivity(intent);
                 }
 
             }
@@ -60,15 +61,16 @@ public class WeeklyFragment extends Fragment {
         ArrayList<DayDetails> days = new ArrayList<DayDetails>();
         int validDays = 0;
         int weeklyCount = 0;
-
+        int totalGoal = 0;
         for (int i = 1; i <= 7; i++) {
+
             Calendar cal = GregorianCalendar.getInstance();
             cal.setTime(new Date());
             cal.add(Calendar.DAY_OF_YEAR, -i);
             Date daysBeforeDate = cal.getTime();
 
             DayDetails day = new DayDetails();
-            DatabaseHandler dbHandler = new DatabaseHandler(getActivity().getApplicationContext());
+            DatabaseHandler dbHandler = new DatabaseHandler(getActivity());
             int stepCount = dbHandler.getDayDataFromActivityLog(daysBeforeDate);
 //            Log.i("cursor_log", "table count is " + Integer.toString(cursor.getCount()));
 
@@ -76,24 +78,33 @@ public class WeeklyFragment extends Fragment {
 
             if (day.getStepsTaken() > 0)
                 validDays++;
+            int dayGoal = dbHandler.getDayGoal(daysBeforeDate);
+            day.setDayGoal(dayGoal);
 
+            Log.i("check", "day goal is " + dayGoal);
             day.setDate(daysBeforeDate);
-            day.setStepsRemained((WeeklyActivity.goal - day.getStepsTaken()));
+            day.setStepsRemained((dayGoal - day.getStepsTaken()));
+
             if (day.getStepsRemained() <= 0)
                 day.setGoalAchieved(true);
             else
                 day.setGoalAchieved(false);
 
-            days.add( day);
-            weeklyCount += day.getStepsTaken();
+            days.add(day);
+
+            if (day.getStepsTaken() != 0) {
+                weeklyCount += day.getStepsTaken();
+                totalGoal += dayGoal;
+            }
         }
         DayDetails dayAvg = new DayDetails();
 
         if (validDays != 0) {
-            dayAvg.setStepsTaken(weeklyCount / validDays);
-            dayAvg.setStepsRemained(WeeklyActivity.goal - weeklyCount / validDays);
+            dayAvg.setStepsTaken(weeklyCount);
+            dayAvg.setDayGoal(totalGoal);
+            dayAvg.setStepsRemained(totalGoal - weeklyCount);
         }
-
+        totalGoal = 0;
 
         if (dayAvg.getStepsRemained() <= 0)
             dayAvg.setGoalAchieved(true);
@@ -106,6 +117,5 @@ public class WeeklyFragment extends Fragment {
 
         return days;
     }
-
 }
 

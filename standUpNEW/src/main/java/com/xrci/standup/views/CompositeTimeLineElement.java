@@ -24,8 +24,9 @@ public class CompositeTimeLineElement extends RelativeLayout {
 	int type;
 	String text_line1="",text_line2="";
 	int fillColor;
-	int maxCircleRadius=100,minHorizontalRectangleWidth=20;
+	int maxCircleRadius=85,minHorizontalRectangleWidth=20;
 	int minCircleRadius=30,withMinCircleHorizontalRectangleWidth=100;
+    int maxCircleRadiusTime = 75;
 	
 	
 	int circleRadius,horizontalRectangleWidth, verticalRectangleHeight;
@@ -52,7 +53,7 @@ public class CompositeTimeLineElement extends RelativeLayout {
 		imageViewActivityLogo=(ImageView)findViewById(R.id.imageViewLogo);
 		
 		setFillColor(activity);
-		setDimensions(timePeriod,activity);
+		setDimensions(timePeriod,activity, steps);
 		setText(timePeriod,activity,steps);
 		setImage(activity);
 		renderDrawings();
@@ -129,26 +130,38 @@ public class CompositeTimeLineElement extends RelativeLayout {
 	}
 
 
-	void setDimensions(long timePeriod,int activity)
+	void setDimensions(long timePeriod,int activity, int steps)
 	{
-		int timePeriodinMinutes=(int)timePeriod/(60*1000);
+		long timePeriodinMinutes=(int)timePeriod/(60*1000);
 		System.out.println("time Period in minutes:"+timePeriodinMinutes);
 		
-		if(activity==DetectedActivity.STILL||activity==DetectedActivity.IN_VEHICLE||activity==utils.ACTIVITY_WORKING)
-			circleRadius=timePeriodinMinutes*3;
-		else
-			circleRadius=timePeriodinMinutes*15;
-		horizontalRectangleWidth=200-circleRadius;
-		
+		if(activity==DetectedActivity.STILL||activity==DetectedActivity.IN_VEHICLE||activity==utils.ACTIVITY_WORKING) {
+            circleRadius = (int)(timePeriodinMinutes * 3);
+            if(circleRadius > maxCircleRadiusTime){
+                circleRadius = maxCircleRadiusTime;
+            }
+            horizontalRectangleWidth= 115 - circleRadius;
+
+        }
+		else {
+            circleRadius = minCircleRadius * steps/30;
+            if(circleRadius > maxCircleRadius){
+                circleRadius = maxCircleRadius;
+            }
+            horizontalRectangleWidth= (int)(215 - circleRadius/1.3);
+
+
+        }
+
 		if(circleRadius<=minCircleRadius)
 		{
 			circleRadius=minCircleRadius;
-			horizontalRectangleWidth=withMinCircleHorizontalRectangleWidth;
+//			horizontalRectangleWidth=withMinCircleHorizontalRectangleWidth;
 		}
 		else if(circleRadius>=maxCircleRadius)
 		{
 			circleRadius=maxCircleRadius;
-			horizontalRectangleWidth=minHorizontalRectangleWidth;
+//			horizontalRectangleWidth=minHorizontalRectangleWidth;
 		}
 		verticalRectangleHeight=circleRadius*2;
 		System.out.println("Circle radius:"+circleRadius);

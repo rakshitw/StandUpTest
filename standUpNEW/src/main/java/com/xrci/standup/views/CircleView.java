@@ -170,6 +170,10 @@ public class CircleView
         this.text_line1 = text;
     }
 
+    public String getTextLine1(){
+        return this.text_line1;
+    }
+
     public void setTextLine2(String text) {
         this.text_line2 = text;
     }

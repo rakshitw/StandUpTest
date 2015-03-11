@@ -30,11 +30,14 @@ import com.facebook.widget.ProfilePictureView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.DetectedActivity;
+import com.xrci.standup.views.CircleView;
 import com.xrci.standup.views.DailyStatisticsCircle;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 public class MainActivity extends Activity {
 
@@ -70,9 +73,8 @@ public class MainActivity extends Activity {
     private static final int REQUEST_OAUTH = 1;
     private BroadcastReceiver mFitStatusAndResolveReceiver;
     public static String MAIN_ACTIVITY_INTENT = "main_activity_intent";
-
+    public static boolean isGoalCircle = false;
     private OnGestureListener mOnGesture = new GestureDetector.SimpleOnGestureListener() {
-
 
 
         @Override
@@ -231,6 +233,79 @@ public class MainActivity extends Activity {
     }
 
     /**
+     *
+     * @param stepCircle
+     */
+    public void switchStepCircle(View stepCircle){
+        CircleView switchCircle = (CircleView) stepCircle;
+//        switchCircle.init();
+        if(!isGoalCircle) {
+            setTodayGoal();
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString("tempSteps",  switchCircle.getTextLine1());
+            editor.commit();
+            int steps = getTodayGoal();
+            switchCircle.setTextLine1(steps + "");
+            switchCircle.setFillColor(utils.COLOR_STILL);
+            switchCircle.invalidate();
+            isGoalCircle = true;
+
+        } else{
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+            String tempSteps = preferences.getString("tempSteps", "0");
+            switchCircle.setTextLine1(tempSteps);
+            switchCircle.setFillColor(utils.COLOR_WALK);
+            switchCircle.invalidate();
+            isGoalCircle = false;
+        }
+    }
+
+    public void setTodayGoal() {
+        String GOALSETDAY = "goalsetday"; //same as in step service
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Date storedDate = new Date(preferences.getLong(GOALSETDAY, 0));
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+        Calendar cal1 = GregorianCalendar.getInstance();
+        cal1.setTime(new Date());
+        Date today = cal1.getTime();
+        if (!fmt.format(storedDate).equals(fmt.format(today))) {
+
+            Calendar cal2 = GregorianCalendar.getInstance();
+            cal2.setTime(new Date());
+            cal2.add(Calendar.DAY_OF_YEAR, -1);
+            Date yesterday = cal2.getTime();
+            int steps = dbHandler.getDayDataFromActivityLog(yesterday);
+            if (steps < 3000)
+                dbHandler.setDayGoal(today, 3000);
+            else if (steps < 4000)
+                dbHandler.setDayGoal(today, 4000);
+            else if (steps < 5000)
+                dbHandler.setDayGoal(today, 5000);
+            else if (steps < 6000)
+                dbHandler.setDayGoal(today, 6000);
+            else if (steps < 7000)
+                dbHandler.setDayGoal(today, 7000);
+            else if (steps < 8000)
+                dbHandler.setDayGoal(today, 8000);
+            else
+                dbHandler.setDayGoal(today, 9000);
+
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putLong(GOALSETDAY, today.getTime());
+            editor.commit();
+        }
+
+    }
+
+    private int getTodayGoal(){
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.setTime(new Date());
+        Date today = cal.getTime();
+        return dbHandler.getDayGoal(today);
+    }
+
+    /**
      * Choose from multiple google accounts
      *
      * @param result
@@ -312,8 +387,10 @@ public class MainActivity extends Activity {
                     Log.i(TAG, "UPDATE_STEPS_ONLY" + updateStepsOnly);
                     if (updateStepsOnly) {
                         int steps = intent.getIntExtra(StepService.STEPS, 0);
-                        updateSteps(steps);
+                        int todaySteps = intent.getIntExtra(StepService.STEPS_TODAY, 0);
+                        updateSteps(steps, todaySteps);
                         Log.i(TAG, "No of steps:" + steps);
+                        Log.i(TAG, "intent today steps " + todaySteps);
                     }
                     if (refreshTimeLineOnly) {
                         //if(workingSinceTimeStamp!=null)
@@ -326,8 +403,8 @@ public class MainActivity extends Activity {
                         //System.out.println("tp:"+timePeriod);
                         String since = intent.getStringExtra(StepService.SINCE);
                         int activity = intent.getIntExtra(StepService.ACTIVITY, 0);
-
-                        updateCurrentActivityLayout(activity, timePeriod, since);
+                        int todaySteps = intent.getIntExtra(StepService.STEPS_TODAY, 0);
+                        updateCurrentActivityLayout(activity, timePeriod, since, todaySteps);
 
                         boolean refreshTimeline = intent.getBooleanExtra(StepService.REFRESH_TIMELINE, false);
                         if (refreshTimeline) {
@@ -492,10 +569,10 @@ public class MainActivity extends Activity {
 
 
     protected void updateCurrentActivityLayout(int activity, long timePeriod,
-                                               String since) {
+                                               String since, int todaySteps) {
         // TODO Auto-generated method stub
         try {
-            fragment.updateCurrentActivity(activity, timePeriod, since);
+            fragment.updateCurrentActivity(activity, timePeriod, since, todaySteps);
         } catch (Exception e) {
             Logger.appendLog("Exception in updateCurrentActivityLayout(MainActivity):" + e.getMessage(), true);
         }
@@ -504,11 +581,11 @@ public class MainActivity extends Activity {
     }
 
 
-    protected void updateSteps(int steps) {
+    protected void updateSteps(int steps, int todaySteps) {
         // TODO Auto-generated method stub
         try {
             if (fragment != null) {
-                fragment.updateSteps(steps);
+                fragment.updateSteps(steps, todaySteps);
             }
         } catch (Exception e) {
             Logger.appendLog("Exception in updateSteps(MainActivity):" + e.getMessage(), true);
@@ -775,6 +852,5 @@ public class MainActivity extends Activity {
 	
 	
 	*/
-
 
 }

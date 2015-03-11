@@ -9,35 +9,35 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="45dp"
+        android:layout_marginRight="45dp"
+        android:layout_marginBottom="30dp"
+        android:layout_marginTop="20dp"
         android:gravity="center"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
         android:orientation="horizontal">
 
-        <LinearLayout
-            android:id="@+id/linearLayoutCurrentActivity"
-            android:layout_width="match_parent"
+        <com.xrci.standup.views.CircleView
+            android:id="@+id/circleViewTodayStep"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginRight="60dp"
-            android:orientation="vertical"
-            android:paddingTop="10dp">
+            android:paddingTop="5dp"
+            android:layout_marginRight="15dp"
+            cloudteams:circleGap="0dp"
+            cloudteams:circleRadius="40dp"
+            cloudteams:fillColor="#15A083"
+            cloudteams:strokeWidth="0dp"
+            cloudteams:text_line1="0"
+            cloudteams:text_line2="steps"
+            android:onClick="switchStepCircle"/>
 
-            <TextView
-                android:id="@+id/textViewCurrentActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Unknown"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+
+
 
             <com.xrci.standup.views.CircleView
                 android:id="@+id/circleViewCurrent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-
-
+                android:layout_marginRight="15dp"
                 android:paddingTop="5dp"
                 cloudteams:circleGap="0dp"
                 cloudteams:circleRadius="40dp"
@@ -46,62 +46,18 @@
                 cloudteams:text_line1="0"
                 cloudteams:text_line2="mins" />
 
-            <TextView
-                android:id="@+id/textViewCurrentActivityTimePeriod"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:text="Since xx:xx "
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/linearLayoutStepActivity"
-            android:layout_width="match_parent"
+        <com.xrci.standup.views.CircleView
+            android:id="@+id/complianceCircle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:paddingTop="10dp">
+            android:paddingTop="5dp"
+            cloudteams:circleGap="0dp"
+            cloudteams:circleRadius="40dp"
+            cloudteams:fillColor="#15A083"
+            cloudteams:strokeWidth="0dp"
+            cloudteams:text_line1=" 0%"
+            cloudteams:text_line2="" />
 
-            <TextView
-                android:id="@+id/textViewStepActivity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Steps"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <com.xrci.standup.views.CircleView
-                android:id="@+id/circleViewTodayStep"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-
-                android:paddingTop="5dp"
-                cloudteams:circleGap="0dp"
-                cloudteams:circleRadius="40dp"
-                cloudteams:fillColor="#15A083"
-                cloudteams:strokeWidth="0dp"
-                cloudteams:text_line1="0"
-                cloudteams:text_line2="steps" />
-
-            <TextView
-                android:id="@+id/textViewSteptActivityTimePeriod"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:text="Since 00:00 "
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-
-        </LinearLayout>
     </LinearLayout>
 
 

@@ -24,11 +24,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 2;
+    private final static int DB_VERSION = 6;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
     private static final String TABLE_NOTIFICATION_ACTIVITY_LOG = "tbl_notification_log";
+    private static final String TABLE_GOAL_LOG = "tbl_goal_log";
     //SAMPLER table name
 
     private static final String TABLE_SAMPLES = "tbl_samples";
@@ -42,12 +43,17 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String NO_OF_STEPS = "nofsteps";
     private static final String TIME_PERIOD = "timeperiod"; // discard time period value and calculate dynamically
     private static final String SYNCED = "synced";
-
+    private static final String KEY_DAY_DATE = "dayDate";
+    private  static final String KEY_GOAL = "goal";
 
     private static final String ROWID = "ROWID";
     private static final String DISCARDED = "discarded";
     private static final String SITTINGTIME = "sittingtime";
     private static final String MAXSITTINGTIME = "maxsittingtime";
+    private static String CREATE_GOAL_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_GOAL_LOG + "("
+            + ROWID + " INTEGER PRIMARY KEY,"
+            + KEY_DAY_DATE + " TEXT,"  + KEY_GOAL + " INTEGER)";
+
     //Context cont;
 
 
@@ -71,6 +77,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             String CREATE_NOTIFICATION_LOG_TABLE = "CREATE TABLE " + TABLE_NOTIFICATION_ACTIVITY_LOG + "("
                     + ROWID + " INTEGER PRIMARY KEY," + SITTINGTIME + " INTEGER," + MAXSITTINGTIME + " INTEGER," + SYNCED + " INTEGER, " + KEY_TIMESTAMP + " TEXT)";
             db.execSQL(CREATE_NOTIFICATION_LOG_TABLE);
+
+            db.execSQL(CREATE_GOAL_TABLE);
 
 
             //db.close();
@@ -96,7 +104,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(CREATE_NOTIFICATION_LOG_TABLE);
             System.out.println("Came in upgrade");
         }
-    }
+
+            db.execSQL(CREATE_GOAL_TABLE);
+
+
+        }
+
+
 
 
 //	public void addUserActivity(int activity,UserActivity ua,int synced)
@@ -114,7 +128,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 //
 //	    values.put(SYNCED, synced);
 //	    values.put(DISCARDED, 0);
-//	    values.put(KEY_TIMESTAMP, sf.format(Calendar.getInstance().getTime()));
+//	    values.put(KEY_TIMESTAMP, sf.format(`Calendar.getInstance().getTime()));
 //	    long rowinserted= db.insert(TABLE_ACTIVITY_LOG, null, values);
 //		   System.out.println("Row inserted: "+rowinserted);
 //		    db.close();
@@ -140,6 +154,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         System.out.println("Row inserted: " + rowinserted);
         db.close();
     }
+
+    public void setDayGoal(Date dayDate, int goal) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_DAY_DATE, sf.format(dayDate));
+        values.put(KEY_GOAL, goal);
+        long rowinserted = db.insert(TABLE_GOAL_LOG, null, values);
+        System.out.println("Row inserted for goal: " + rowinserted);
+        db.close();
+    }
+
+
 
     public void addNotification(Date notificationTimestamp, int sittingPeriod, int maxsittingPeriod) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -527,7 +554,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                     ad.timePeriod = ad.end.getTime() - ad.start.getTime();
                     userActivities.add(ad);
 
-                    System.out.println(logCursor.getString(1) + "-" + logCursor.getString(2));
+                    System.out.println("Activity:"+ ad.activityType+"Time: "+logCursor.getString(1) + "-" + logCursor.getString(2));
 
 
                     //System.out.println(logCursor.getString(0)+"   "+ logCursor.getLong(1));
@@ -557,14 +584,37 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 //        db.close();
         if(cursor.moveToFirst()) {
             Log.i("cursor_log", "today steps are " +  Integer.toString(cursor.getInt(0)));
-             stepCount = cursor.getInt(0);
+            stepCount = cursor.getInt(0);
         }
         else
-            stepCount = - 1;
+            stepCount = 7000;
 
         cursor.close();
         db.close();
         return  stepCount;
+    }
+
+    public int getDayGoal(Date date) {
+        int dayGoal;
+        //Make sure that date format and column format is consistent
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = simpleDateFormat.format(date);
+        String fetchDateOnly = dateString.substring(0,10);
+        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] selectionArgs = new String[] { "%" + fetchDateOnly + "%" };
+        Cursor cursor = db.rawQuery("SELECT " + KEY_GOAL + " FROM "  + TABLE_GOAL_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
+//        db.close();
+        if(cursor.moveToFirst()) {
+            Log.i("cursor_log", "today steps are " +  Integer.toString(cursor.getInt(0)));
+            dayGoal = cursor.getInt(0);
+        }
+        else
+            dayGoal = 7000;
+
+        cursor.close();
+        db.close();
+        return  dayGoal;
     }
 }
 	

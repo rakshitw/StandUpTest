@@ -2,11 +2,11 @@ package com.xrci.standup;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.xrci.standup.utility.DayDetails;
@@ -40,23 +40,29 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
 
         View view = convertView;
 
-//        if (view == null) {
+        if (view == null) {
 
-//            LayoutInflater viewInflator;
-//            viewInflator = LayoutInflater.from(getContext());
+            LayoutInflater viewInflator;
+            viewInflator = LayoutInflater.from(getContext());
             view = getInflatedLayout(position);
 
-//        }
+        }
 
         DayDetails day = getItem(position);
 
 
         if (day != null) {
             DailyStatisticsCircle dailyStatistics = (DailyStatisticsCircle) view.findViewById(R.id.dailyStatisiticsCircle);
+            DailyStatisticsCircle complianceCircle = (DailyStatisticsCircle) view.findViewById(R.id.dailyComplianceCircle);
             TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
             TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
-            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
+//            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
             dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()) + "  steps");
+            if(complianceCircle == null){
+                Log.i("check", "compliance circle is null");
+            } else
+                complianceCircle.setCenterText( " " + Integer.toString(day.getCompliance()) + "%" );
+
             if (dateView != null) {
                 if (day.getDate() != null) {
                     Calendar cal = GregorianCalendar.getInstance();
@@ -76,31 +82,36 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             if (achieveView != null) {
                 if (day.getGoalAchieved() != null)
                     if (day.getGoalAchieved())
-                        achieveView.setText("Woohoo");
+                        achieveView.setText("Goal Achieved");
                     else {
                         if (day.getStepsTaken() == 0)
-                            achieveView.setText("Steps unavailable");
+                            achieveView.setText("Goal unavailable");
                         else
 
-                            achieveView.setText("Try harder");
+                            achieveView.setText("Goal: " + day.getDayGoal());
                     }
             }
             if(position == 0) {
                 dailyStatistics.setmRadius(120);
                 dailyStatistics.setTextSize(28);
                 dailyStatistics.setCentertextColor(Color.WHITE);
-                achieveView.setText("Daily Goal: " + WeeklyActivity.goal);
-
+                complianceCircle.setmRadius(120);
+                complianceCircle.setTextSize(28);
+                complianceCircle.setCentertextColor(Color.WHITE);
 
             }
-            else
+            else{
                 dailyStatistics.setTextSize(22);
+                complianceCircle.setTextSize(22);
+            }
 
 
 
             if (day.getStepsTaken() != 0) {
                 dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
                 dailyStatistics.init();
+                complianceCircle.setArcStartEndAngles(100 - day.getCompliance(), day.getCompliance(), 0, 0, 0);
+                complianceCircle.init();
 
             }
 
@@ -117,14 +128,14 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
              * Change images
              */
 
-            if (day.getStepsTaken() != 0){
-                if (day.getGoalAchieved())
-                    rowImage.setImageResource(R.drawable.happyman);
-                else
-                    rowImage.setImageResource(R.drawable.eldersad);
-            }
-            else
-                rowImage.setImageResource(R.drawable.confusedman);
+//            if (day.getStepsTaken() != 0){
+//                if (day.getGoalAchieved())
+//                    rowImage.setImageResource(R.drawable.happyman);
+//                else
+//                    rowImage.setImageResource(R.drawable.eldersad);
+//            }
+//            else
+//                rowImage.setImageResource(R.drawable.confusedman);
         }
 
         return view;

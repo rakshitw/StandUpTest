@@ -66,7 +66,7 @@ public class StepService extends Service implements SensorEventListener {
     private int intermediate_count = 0;
     private int delta_value = 0;
     private int delta_intermediate_value = 0;
-    private int sampling_rate = 7;  //Sample Rate for Sensor
+    private int sampling_rate = 5;  //Sample Rate for Sensor
     private AtomicBoolean hasStepsStarted = new AtomicBoolean(false);
     private AtomicBoolean hasStepRecordingStarted = new AtomicBoolean(false);
     private Date logStartTime;
@@ -104,9 +104,10 @@ public class StepService extends Service implements SensorEventListener {
     static final public String STEPS = "steps";
     static final public String TIME_PERIOD = "timeperiod";
     public static final String TODAY = "today";
+    public static final String STEPS_TODAY = "steps_today";
     private LocalBroadcastManager broadcaster;
-    DatabaseHandler dbHandler;
-
+    private DatabaseHandler dbHandler;
+    private static final String GOALSETDAY = "goalsetday";
     private boolean isUserValidated = false;
     private JSONArray entityArray;
     private int userId;
@@ -119,6 +120,7 @@ public class StepService extends Service implements SensorEventListener {
     private boolean authInProgress = false;
 
     private GoogleApiClient mClient = null;
+//    private int samplingRate = 5;
     // [END auth_variable_references]
 
     // [START mListener_variable_reference]
@@ -196,13 +198,15 @@ public class StepService extends Service implements SensorEventListener {
         String userName = preferences.getString("name", "default");
         Log.i(TAG, "name is " + userName);
 
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTime(new Date());
-        Date today = cal.getTime();
-        dateEditor = preferences.edit();
-        dateEditor.putLong(TODAY, today.getTime());
-        dateEditor.putInt(STEPS, dbHandler.getDayDataFromActivityLog(today));
-        dateEditor.commit();
+        Date cal = Calendar.getInstance().getTime();
+//        Date today =
+//        cal.add(Calendar.DAY_OF_YEAR, 0);
+        dbHandler = new DatabaseHandler(this);
+        int stepsToday = dbHandler.getDayDataFromActivityLog(cal);
+        Log.i(TAG, "date is " + cal.toString() + "steps are " + stepsToday);
+        editor.putLong(TODAY, cal.getTime());
+        editor.putInt(STEPS, stepsToday);
+//        editor.commit();
         AuthenticationModel authModel = new AuthenticationModel(userName, "notAvailable", "facebook", fbid, 1);
         String response = authModel.verifyAuthentication();
         Log.i(TAG, "authentication response is " + response);
@@ -220,58 +224,19 @@ public class StepService extends Service implements SensorEventListener {
         if (isUserValidated == true) {
             Log.i(TAG, "user id throught setUserId" + setUserId(response));
             editor.putInt("userId", setUserId(response));
-            editor.commit();
             Log.i(TAG, "user is validated " + userId);
 
         } else {
             Log.i(TAG, "user not validated" + userId);
         }
+        editor.commit();
 
 
         //initialize entityArray
         entityArray = new JSONArray();
-//       Log.i(TAG, "entity length before send is " + entityArray.length());
-//        sendActivityDetailToServer(Calendar.getInstance().getTime(), Calendar.getInstance().getTime(),1,0);
-//        Log.i(TAG, "entity length after send is " + entityArray.length());
-
 
 //        Log.i(TAG, "is user validated " + isUserValidated );
         Log.i(TAG, "authentication response is " + response);
-
-//        JSONObject authenticateObject = new JSONObject();
-//        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
-//        try {
-//            authenticateObject.put("userName", "Rakshit");
-//            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
-//            authenticateObject.put("authType", "Facebook");
-//
-//            Log.i(TAG, "fbid is " + fbid);
-//            authenticateObject.put("authId", fbid);
-//
-//
-//            authenticateObject.put("typeId", 1);
-//
-//        } catch (JSONException e) {
-//            Log.i(TAG, "JSON Exception");
-//        }
-//        String authenticationString = authenticateObject.toString();
-//        String response = PostData.postContent(AuthenticationModel.authenticationUri, authenticationString);
-//        Log.i(TAG, "response is " + response);
-//        Log.i(TAG, "authentication string was " + authenticationString);
-//
-//        try {
-//            JSONObject responseObject;
-//            responseObject = new JSONObject(response);
-//            int userId = Integer.parseInt(responseObject.get("id").toString());
-//
-//            SharedPreferences preferences =
-//                    PreferenceManager.getDefaultSharedPreferences(this);
-//            SharedPreferences.Editor editor = preferences.edit();
-//            editor.putInt("userId", userId);
-//            editor.commit();
-//        } catch (JSONException e) {
-//            Log.i(TAG, "response string not a JSON");
-//        }
 
 
         Log.i(TAG, "service started");
@@ -287,6 +252,8 @@ public class StepService extends Service implements SensorEventListener {
 
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
+        //Set step goal
+        setTodayGoal();
 
 //        Logger.appendLog("service started", true);
         myTimer = new Timer();
@@ -306,7 +273,6 @@ public class StepService extends Service implements SensorEventListener {
         // Set local broadcast manager
 
         broadcaster = LocalBroadcastManager.getInstance(this);
-        dbHandler = new DatabaseHandler(this);
         setReceiveFitResolutionReceiver();
         startListeningFromMainActivity();
         buildFitnessClient();
@@ -397,13 +363,15 @@ public class StepService extends Service implements SensorEventListener {
                 Log.i(TAG, "doing nothing for unknown");
 //                if( (curr_time.getTime() - stillStartTime.getTime()) > 3000 )
                 updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
-                        , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false);
-//                PostData.postContent()
+                        , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0));
+
+//
+// PostData.postContent()
             } else {
 //            if (!hasSittingEndedByUnknown.get()) {
                 Log.i(TAG, "updating sitting UI");
 //                    if( (curr_time.getTime() - stillStartTime.getTime()) > 3000 )
-                updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime() - stillStartTime.getTime(), false, false, 0, false);
+                updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime() - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0));
 
             }
 
@@ -422,7 +390,7 @@ public class StepService extends Service implements SensorEventListener {
             dbHandler.addUserActivity(DetectedActivity.UNKNOWN, activityDetails, 0);
 
             //TODO check the parameters
-            updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true);
+            updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true, getTotalStepsToday(0));
             //Send to server too
             sendActivityDetailToServer(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, -1);
 
@@ -440,7 +408,7 @@ public class StepService extends Service implements SensorEventListener {
 //            if( (stillEndTime.getTime() - stillStartTime.getTime()) > 15000 ) {
             ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.STILL, stillEndTime.getTime() - stillStartTime.getTime(), stillStartTime, stillEndTime, 0);
             dbHandler.addUserActivity(DetectedActivity.STILL, activityDetails, 0);
-            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true);
+            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true, getTotalStepsToday(0));
             //Send to server too
             sendActivityDetailToServer(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
             Log.i(TAG, "end time for still is " + stillEndTime);
@@ -452,7 +420,7 @@ public class StepService extends Service implements SensorEventListener {
             Log.i(TAG, "hasSittingendedbyunknown");
             ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.STILL, stillEndTime.getTime() - stillStartTime.getTime(), stillStartTime, stillEndTime, 0);
             dbHandler.addUserActivity(DetectedActivity.STILL, activityDetails, 0);
-            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true);
+            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, true, getTotalStepsToday(0));
             //Send to server too
             sendActivityDetailToServer(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
             Log.i(TAG, "end time for still is " + stillEndTime);
@@ -487,7 +455,7 @@ public class StepService extends Service implements SensorEventListener {
 
                 //TODO check the parameters
 
-                updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true);
+                updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true, getTotalStepsToday(0));
                 //Send to server too
                 sendActivityDetailToServer(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, -1);
 
@@ -516,8 +484,9 @@ public class StepService extends Service implements SensorEventListener {
             ActivityDetails activityDetails = new ActivityDetails(DetectedActivity.ON_FOOT, end_time.getTime() - start_time.getTime(), start_time, end_time, delta_value);
             dbHandler.addUserActivity(DetectedActivity.ON_FOOT, activityDetails, 0);
             //update step circle here
-            Log.i(TAG, "" + setTotalStepsToday());
-            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, false);
+            setTotalStepsToday(delta_value);
+//            Log.i(TAG, "set total steps today " + setTotalStepsToday());
+            updateActivityUI(DetectedActivity.STILL, end_time, 0, true, false, 0, false, getTotalStepsToday(0));
             hasStepsStarted.set(false);
             hasStepRecordingStarted.set(false);
             isStill.set(true);
@@ -686,9 +655,9 @@ public class StepService extends Service implements SensorEventListener {
                         Log.i(TAG, "data point??" + intermediateStepCount);
                         long intermediate_timeperiod = Calendar.getInstance().getTime().getTime()
                                 - start_time.getTime();
-                        updateActivityUI(DetectedActivity.ON_FOOT, start_time
-                                , intermediate_timeperiod, false, true, intermediateStepCount, false);
                         //update step circle here
+                        updateActivityUI(DetectedActivity.ON_FOOT, start_time
+                                , intermediate_timeperiod, false, true, intermediateStepCount, false, getTotalStepsToday(intermediateStepCount));
                         Log.i(TAG, "get Total Steps Today = " + getTotalStepsToday(intermediateStepCount));
 
 
@@ -710,7 +679,8 @@ public class StepService extends Service implements SensorEventListener {
                 new SensorRequest.Builder()
                         .setDataSource(dataSource) // Optional but recommended for custom data sets.
                         .setDataType(dataType) // Can't be omitted.
-                        .setSamplingRate(1, TimeUnit.SECONDS)
+                                //TODO check how sampling rate affects?
+                        .setSamplingRate(sampling_rate, TimeUnit.SECONDS)
                         .build(),
                 mListener)
                 .setResultCallback(new ResultCallback<Status>() {
@@ -758,7 +728,8 @@ public class StepService extends Service implements SensorEventListener {
     }
 
 
-    void updateActivityUI(int activity2, Date startTime, long timePeriod, boolean refreshTimeline, boolean updateStepsOnly, int steps, boolean refreshtimeLineOnly) {
+    void updateActivityUI(int activity2, Date startTime, long timePeriod, boolean refreshTimeline
+            , boolean updateStepsOnly, int steps, boolean refreshtimeLineOnly, int steps_today) {
         try {
             SimpleDateFormat sf = new SimpleDateFormat("HH:mm");
             Intent intent = new Intent(UPDATE_CURRENT_FRAGMENT);
@@ -770,6 +741,9 @@ public class StepService extends Service implements SensorEventListener {
             intent.putExtra(UPDATE_STEPS_ONLY, updateStepsOnly);
             intent.putExtra(REFRESH_TIMELINE_ONLY_STOP_LISTENING, refreshtimeLineOnly); // Sent when Monitoring stops, deactivate listener
             intent.putExtra(STEPS, steps);
+            intent.putExtra(STEPS_TODAY, steps_today);
+
+
             //System.out.println("TimePeriod"+timePeriod);
 
             broadcaster.sendBroadcast(intent);
@@ -780,6 +754,7 @@ public class StepService extends Service implements SensorEventListener {
 
 
     }
+
 
     private SensorManager mSensorManager;
     private Sensor mProximity;
@@ -897,32 +872,6 @@ public class StepService extends Service implements SensorEventListener {
 
     }
 
-//    public String verifyAuthentication(String userName, ) {
-//
-//        JSONObject authenticateObject = new JSONObject();
-//        //     {"userName": "amandeep","email": "amandeep@abc.com","authType" : "Facebook" , "authId": 1212432142, "typeId": 1}
-//        try {
-//            authenticateObject.put("userName", "Rakshit");
-//            authenticateObject.put("email", "rakshit19.wadhwa@gmail.com");
-//            authenticateObject.put("authType", "Facebook");
-//            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-//            String fbid = preferences.getString("fbid", "0");
-//            Log.i(TAG, "fbid is " + fbid);
-//            authenticateObject.put("authId", 1234683);
-//
-//
-//            authenticateObject.put("typeId", 1);
-//
-//        } catch (JSONException e) {
-//            Log.i(TAG, "JSON Exception");
-//        }
-//        String authenticationString = authenticateObject.toString();
-//        String response = PostData.postContent(authenticationUri, authenticationString);
-//        Log.i(TAG, "response is " + response);
-//        Log.i(TAG, "authentication string was " + authenticationString);
-//
-//    }
-
     /**
      * @param activityStartTime
      * @param activityEndTime
@@ -1004,26 +953,76 @@ public class StepService extends Service implements SensorEventListener {
 
     }
 
-    public int setTotalStepsToday() {
+    public int setTotalStepsToday(int delta_value) {
         Date storedDate = new Date(preferences.getLong(TODAY, 0));
         Calendar cal = GregorianCalendar.getInstance();
         cal.setTime(new Date());
         Date today = cal.getTime();
+//        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+//        if (fmt.format(storedDate).equals(fmt.format(today))) {
+//            int stepBase = preferences.getInt(STEPS, 0);
+//            SharedPreferences.Editor editor = preferences.edit();
+//            editor.putLong(STEPS, stepBase + delta_value);
+//            editor.commit();
+//            return stepBase + delta_value;
+//        } else {
+
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putLong(TODAY, today.getTime());
+        int steps = dbHandler.getDayDataFromActivityLog(today);
+        editor.putInt(STEPS, steps);
+        editor.commit();
+        return steps;
+//        }
+
+
+    }
+
+    /**
+     * Set goal for today, updates preference manager to the current date
+     * if goal is not set on current day...
+     *
+     * Use this at start of service, and notification send time.
+     */
+
+    public void setTodayGoal() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Date storedDate = new Date(preferences.getLong(GOALSETDAY, 0));
         SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
-        if (fmt.format(storedDate).equals(fmt.format(today))) {
-            int stepBase = preferences.getInt(STEPS, 0);
+        Calendar cal1 = GregorianCalendar.getInstance();
+        cal1.setTime(new Date());
+        Date today = cal1.getTime();
+        if (!fmt.format(storedDate).equals(fmt.format(today))) {
+
+            Calendar cal2 = GregorianCalendar.getInstance();
+            cal2.setTime(new Date());
+            cal2.add(Calendar.DAY_OF_YEAR, -1);
+            Date yesterday = cal2.getTime();
+            int steps = dbHandler.getDayDataFromActivityLog(yesterday);
+            if (steps < 4000)
+                dbHandler.setDayGoal(today, 4000);
+            else if (steps < 5000)
+                dbHandler.setDayGoal(today, 5000);
+            else if (steps < 6000)
+                dbHandler.setDayGoal(today, 6000);
+            else if (steps < 7000)
+                dbHandler.setDayGoal(today, 7000);
+            else if (steps < 8000)
+                dbHandler.setDayGoal(today, 8000);
+            else
+                dbHandler.setDayGoal(today, 9000);
+
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putLong(STEPS, stepBase + delta_value);
+            editor.putLong(GOALSETDAY, today.getTime());
             editor.commit();
-            return stepBase + delta_value;
-        } else {
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putLong(TODAY, today.getTime());
-            editor.putLong(STEPS,delta_value);
-            editor.commit();
-            return delta_value;
         }
 
+    }
 
+    public int getTodayGoal() {
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.setTime(new Date());
+        Date today = cal.getTime();
+        return dbHandler.getDayGoal(today);
     }
 }
