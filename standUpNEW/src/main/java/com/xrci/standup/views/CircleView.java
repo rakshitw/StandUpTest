@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 
 import com.xrci.standup.R;
 
@@ -19,7 +18,7 @@ public class CircleView
         extends AbstractBaseView {
 
     private int circleType;
-    private int circleRadius = 20;
+    private int circleRadius = 40;
     private int strokeColor = Color.WHITE;
     private int strokeWidth = 0;
     private int fillColor = Color.RED;
@@ -92,8 +91,8 @@ public class CircleView
 //        DisplayMetrics metrics = resources.getDisplayMetrics();
 //        float dp = px / (metrics.densityDpi / 160f);
 //        return dp;
-
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, px, getResources().getDisplayMetrics());
+        return px;
+//        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, px, getResources().getDisplayMetrics());
 
 
     }

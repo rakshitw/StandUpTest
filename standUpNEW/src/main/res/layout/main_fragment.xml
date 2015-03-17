@@ -6,11 +6,11 @@
     android:background="#08090A"
     android:orientation="vertical">
 
+
+
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="45dp"
-        android:layout_marginRight="45dp"
         android:layout_marginBottom="30dp"
         android:layout_marginTop="20dp"
         android:gravity="center"
@@ -20,8 +20,8 @@
             android:id="@+id/circleViewTodayStep"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="5dp"
             android:layout_marginRight="15dp"
+
             cloudteams:circleGap="0dp"
             cloudteams:circleRadius="40dp"
             cloudteams:fillColor="#15A083"
@@ -38,19 +38,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="15dp"
-                android:paddingTop="5dp"
                 cloudteams:circleGap="0dp"
                 cloudteams:circleRadius="40dp"
                 cloudteams:fillColor="#15A083"
                 cloudteams:strokeWidth="0dp"
                 cloudteams:text_line1="0"
-                cloudteams:text_line2="mins" />
+                cloudteams:text_line2="mins"
+
+                />
 
         <com.xrci.standup.views.CircleView
             android:id="@+id/complianceCircle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="5dp"
+
             cloudteams:circleGap="0dp"
             cloudteams:circleRadius="40dp"
             cloudteams:fillColor="#15A083"
@@ -59,6 +60,8 @@
             cloudteams:text_line2="" />
 
     </LinearLayout>
+
+
 
 
     <ScrollView

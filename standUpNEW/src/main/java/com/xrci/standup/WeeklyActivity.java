@@ -88,6 +88,7 @@ public class WeeklyActivity extends Activity {
                 } else if (e2.getX() - e1.getX() > MainActivity.SWIPE_MIN_DISTANCE && Math.abs(velocityX) > MainActivity.SWIPE_THRESHOLD_VELOCITY) {
                     //Start main activity
                     Intent startMainActivity = new Intent(getApplicationContext(), MainActivity.class);
+                    finish();
                     startActivity(startMainActivity);
 //                    Toast.makeText(getApplicationContext(), "Flip Left to Right", Toast.LENGTH_SHORT).show();
 
@@ -113,10 +114,12 @@ public class WeeklyActivity extends Activity {
             Intent i = new Intent(this, SettingsActivity.class);
             startActivity(i);
 
-        } else if (mDrawerToggle.onOptionsItemSelected(item)) {
-
-            return true;
         }
+        //TODO uncommenting this breaks switching to parent activity
+//        else if (mDrawerToggle.onOptionsItemSelected(item)) {
+//
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }

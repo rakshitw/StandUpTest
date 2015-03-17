@@ -259,16 +259,22 @@ public class FirstScreenActivity extends Activity {
     
     void launchNewActivity()
     {
-    	Intent intent=new Intent(this,MainActivity.class);
-    	finish();
-    	startActivity(intent);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean isFormFilled = preferences.getBoolean(BasicInformationForm.registrationFormFilled, false);
+        if (isFormFilled){
+            Intent intent = new Intent(this, MainActivity.class);
+            finish();
+            startActivity(intent);
+        }
+        else {
+            Intent intent = new Intent(this, BasicInformationForm.class);
+            finish();
+            startActivity(intent);
+        }
     }
 
     void saveUserInformation()
     {
-    	
-		
-		
     	
     }
     

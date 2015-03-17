@@ -47,7 +47,6 @@ public class WeeklyFragment extends Fragment {
                     Intent intent = new Intent(getActivity().getApplicationContext(),
                             DayDetailActivity.class).putExtra(intentFromWeekly, position)
                             .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken());
-
                     startActivity(intent);
                 }
 
@@ -117,5 +116,7 @@ public class WeeklyFragment extends Fragment {
 
         return days;
     }
+
+
 }
 

@@ -48,49 +48,100 @@
             android:gravity="right|center_vertical"
             android:paddingTop="20dp"
             facebook:preset_size="normal" />
-
-
-        <TextView
-
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:text="PC Sync Id:"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="#747474"
-            android:textStyle="bold" />
-
         <TextView
             android:id="@+id/textViewPCSyncId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:paddingLeft="10dp"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="#8E8E8E"
             android:textStyle="bold" />
 
-        <com.xrci.standup.views.DailyStatisticsCircle
-            android:id="@+id/dailyStatisiticsCircle"
-            android:layout_width="wrap_content"
+
+        <TextView
+
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:layout_margin="10dp"
+            android:text="Currently Showing Live Timeline"
+            android:id="@+id/timelineStatusTextView"
+            android:textColor="#61717274"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+
+            android:textStyle="bold" />
 
 
-            >
+        <!--<com.xrci.standup.views.DailyStatisticsCircle-->
+            <!--android:id="@+id/dailyStatisiticsCircle"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginTop="10dp"-->
+            <!--android:gravity="center">-->
 
-        </com.xrci.standup.views.DailyStatisticsCircle>
+        <!--</com.xrci.standup.views.DailyStatisticsCircle>-->
+
+        <TextView
+            android:id="@+id/textViewNotification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:layout_margin="15dp"
+            android:onClick="onNotifications"
+            android:paddingLeft="10dp"
+            android:text="Notifications"
+            android:background="@drawable/touch_selector"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+
+            android:textColor="#ff745663"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textViewWeekLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onWeek"
+            android:layout_margin="15dp"
+            android:paddingLeft="10dp"
+            android:text="Week Statistics"
+            android:background="@drawable/touch_selector"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#ff745663"
+            android:textStyle="bold" />
+        <!-- TODO Any change in textview text must be made same in on click method
+        as well as post execute for the async running in its on click-->
+        <!--<TextView-->
+            <!--android:id="@+id/textFusedTimeline"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:clickable="true"-->
+            <!--android:onClick="onFusedClick"-->
+            <!--android:layout_margin="15dp"-->
+            <!--android:paddingLeft="10dp"-->
+            <!--android:background="@drawable/touch_selector"-->
+            <!--android:text="@string/fuse_timeline"-->
+            <!--android:textAppearance="?android:attr/textAppearanceMedium"-->
+            <!--android:textColor="#ff745663"-->
+            <!--android:textStyle="bold" />-->
+
 
         <TextView
             android:id="@+id/textViewLogout"
             android:layout_width="match_parent"
+
             android:layout_height="wrap_content"
             android:clickable="true"
+            android:layout_margin="15dp"
             android:onClick="onLogout"
             android:paddingLeft="10dp"
             android:text="Logout"
+            android:background="@drawable/touch_selector"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="#747474"
+            android:textColor="#ff745663"
             android:textStyle="bold" />
+
 
 
 

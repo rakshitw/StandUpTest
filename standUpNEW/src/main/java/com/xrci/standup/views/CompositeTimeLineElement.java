@@ -106,7 +106,7 @@ public class CompositeTimeLineElement extends RelativeLayout {
 			imageViewActivityLogo.setImageDrawable(getResources().getDrawable(R.drawable.bike));
 			break;
 		case utils.ACTIVITY_WORKING:
-			imageViewActivityLogo.setImageDrawable(null);
+			imageViewActivityLogo.setImageDrawable(getResources().getDrawable(R.drawable.working));
 			break;
 		}
 		
@@ -131,12 +131,17 @@ public class CompositeTimeLineElement extends RelativeLayout {
 
 
 	void setDimensions(long timePeriod,int activity, int steps)
-	{
+	{   //Screen Changes
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        minCircleRadius = screenWidth/24;
+        maxCircleRadius = (screenWidth * 10)/85 ;
+        maxCircleRadiusTime = (screenWidth * 10)/96;
+
 		long timePeriodinMinutes=(int)timePeriod/(60*1000);
 		System.out.println("time Period in minutes:"+timePeriodinMinutes);
 		
 		if(activity==DetectedActivity.STILL||activity==DetectedActivity.IN_VEHICLE||activity==utils.ACTIVITY_WORKING) {
-            circleRadius = (int)(timePeriodinMinutes * 3);
+            circleRadius = (int)(timePeriodinMinutes * screenWidth/240);
             if(circleRadius > maxCircleRadiusTime){
                 circleRadius = maxCircleRadiusTime;
             }
@@ -176,11 +181,13 @@ public class CompositeTimeLineElement extends RelativeLayout {
 			switch(activity){
 				case DetectedActivity.STILL:
 				case DetectedActivity.IN_VEHICLE:
-				case utils.ACTIVITY_WORKING:
 					 fillColor= utils.COLOR_STILL;
 					 break;
-					 
-				case DetectedActivity.ON_FOOT:
+                case utils.ACTIVITY_WORKING:
+                    fillColor = utils.COLOR_VEHICLE;
+                    break;
+
+                case DetectedActivity.ON_FOOT:
 				case DetectedActivity.ON_BICYCLE:
 					 fillColor= utils.COLOR_WALK;
 					 break;
@@ -200,5 +207,7 @@ public class CompositeTimeLineElement extends RelativeLayout {
 			
 			
 		}
+
+
 
 }

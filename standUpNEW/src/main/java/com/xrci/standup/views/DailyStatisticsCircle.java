@@ -18,14 +18,18 @@ public class DailyStatisticsCircle extends AbstractBaseView {
     }
 
     //int circleRadius;
-	int mRadius=80;
-	int strokeWidth=20;
+
+    int screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+
+	int mRadius=screenWidth/11;
+	int strokeWidth=mRadius/5;
 
     public void setTextSize(int textSize) {
         this.textSize = textSize;
     }
 
-    int textSize=15;
+    int textSize=mRadius/4;
 
     public void setCentertextColor(int centertextColor) {
         this.centertextColor = centertextColor;

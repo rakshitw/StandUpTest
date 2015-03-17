@@ -19,6 +19,7 @@ public class PostActivityDetailsModel {
     public static final String parameterUserId = "userId";
     public static final String parameterTypeID = "typeId";
     public static final String parameterSteps = "steps";
+//    public static String postActivityDetailURI = "http://13.218.150.162:8080/standup/rest/activity/postActivity";
     public static String postActivityDetailURI = "http://64.49.234.131:8080/standup/rest/activity/postActivity";
 
     private Date valueStartTime;
@@ -40,7 +41,7 @@ public class PostActivityDetailsModel {
     public JSONArray getPostActivityJSON(JSONArray jsonArray) {
         JSONObject jsonObject = new JSONObject();
         try {
-            SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
+            SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
             jsonObject.put(parameterStartTime, sf.format(valueStartTime));
             jsonObject.put(parameterEndTime, sf.format(valueEndTime));
             jsonObject.put(parameterSourceId, valueSourceId);

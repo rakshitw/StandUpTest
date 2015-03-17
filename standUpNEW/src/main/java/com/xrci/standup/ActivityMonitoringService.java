@@ -312,9 +312,6 @@
 //
 //        mBuilder.setContentIntent(pIntent);
 //        mNotificationManager.notify(2, mBuilder.build());
-//
-//
-//
 //	}
 //
 //
@@ -658,7 +655,7 @@
 //	    			{
 //	    				Date workingSinceTimeStamp=sf.parse(data.getString("starttime"));
 //	    				int notificationNumber=data.getInt("notificationnumber");
-//	    				//showAlertAndUpdateNotification(workingSinceTimeStamp,notificationNumber);
+//	    				showAlertAndUpdateNotification(workingSinceTimeStamp,notificationNumber);
 //	    			}
 //
 //

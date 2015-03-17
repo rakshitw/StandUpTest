@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.xrci.standup.utility.NotificationModel;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,12 +26,15 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 6;
+    private final static int DB_VERSION = 8;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
     private static final String TABLE_NOTIFICATION_ACTIVITY_LOG = "tbl_notification_log";
     private static final String TABLE_GOAL_LOG = "tbl_goal_log";
+    private static final String TABLE_NOTIFACTION_RECORD = "tbl_notification_record";
+    private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
+
     //SAMPLER table name
 
     private static final String TABLE_SAMPLES = "tbl_samples";
@@ -44,7 +49,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String TIME_PERIOD = "timeperiod"; // discard time period value and calculate dynamically
     private static final String SYNCED = "synced";
     private static final String KEY_DAY_DATE = "dayDate";
-    private  static final String KEY_GOAL = "goal";
+    private static final String KEY_GOAL = "goal";
+    private static final String KEY_NOTIFICATION_MESSAGE = "notification_message";
+    private static final String KEY_NOTIFICATION_TIME = "notification_time";
+
 
     private static final String ROWID = "ROWID";
     private static final String DISCARDED = "discarded";
@@ -52,7 +60,17 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String MAXSITTINGTIME = "maxsittingtime";
     private static String CREATE_GOAL_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_GOAL_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY,"
-            + KEY_DAY_DATE + " TEXT,"  + KEY_GOAL + " INTEGER)";
+            + KEY_DAY_DATE + " TEXT," + KEY_GOAL + " INTEGER)";
+    private static String CREATE_NOTIFICATION_RECORD_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NOTIFACTION_RECORD + "("
+            + ROWID + " INTEGER PRIMARY KEY,"
+            + KEY_NOTIFICATION_MESSAGE + " TEXT,"
+            + KEY_ACTIVITY + " INTEGER,"
+            + KEY_NOTIFICATION_TIME + " TEXT)";
+
+
+    String CREATE_FUSED_LOG_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_FUSED_ACTIVITY_LOG + "("
+            + ROWID + " INTEGER PRIMARY KEY," + KEY_ACTIVITY + " INTEGER,"
+            + KEY_START + " TEXT," + KEY_END + " TEXT," + NO_OF_STEPS + " INTEGER," + TIME_PERIOD + " INTEGER," + SYNCED + " INTEGER, " + KEY_TIMESTAMP + " TEXT," + DISCARDED + " INTEGER )";
 
     //Context cont;
 
@@ -79,8 +97,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(CREATE_NOTIFICATION_LOG_TABLE);
 
             db.execSQL(CREATE_GOAL_TABLE);
+            db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
 
 
+            db.execSQL(CREATE_FUSED_LOG_TABLE);
             //db.close();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -104,13 +124,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(CREATE_NOTIFICATION_LOG_TABLE);
             System.out.println("Came in upgrade");
         }
-
-            db.execSQL(CREATE_GOAL_TABLE);
-
-
-        }
+        db.execSQL(CREATE_FUSED_LOG_TABLE);
+        db.execSQL(CREATE_GOAL_TABLE);
+        db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
 
 
+    }
 
 
 //	public void addUserActivity(int activity,UserActivity ua,int synced)
@@ -155,6 +174,48 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addFusedUserActivity(int activity, ActivityDetails ua, int synced) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_ACTIVITY, activity);
+        values.put(KEY_START, sf.format(ua.start));
+        values.put(KEY_END, sf.format(ua.end));
+        values.put(NO_OF_STEPS, ua.noOfSteps);
+        values.put(TIME_PERIOD, ua.timePeriod);
+        //values.put(KEY_TIMESTAMP, );
+
+        values.put(SYNCED, synced);
+        values.put(DISCARDED, 0);
+        values.put(KEY_TIMESTAMP, sf.format(Calendar.getInstance().getTime()));
+        long rowinserted = db.insert(TABLE_FUSED_ACTIVITY_LOG, null, values);
+        System.out.println("Row inserted: " + rowinserted);
+        db.close();
+    }
+
+    public void clearFusedUserActivity(Date date) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = simpleDateFormat.format(date);
+        String fetchDateOnly = dateString.substring(0, 10);
+        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getWritableDatabase();
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT COUNT (*) FROM " + TABLE_ACTIVITY_LOG, null);
+        cursor.moveToFirst();
+        Log.i("check", "count before is  for fusion" + cursor.getInt(0));
+        cursor.close();
+        db.rawQuery("DELETE FROM "  + TABLE_FUSED_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs).moveToFirst();
+        Cursor cursor2 = db.rawQuery("SELECT COUNT (*) FROM " + TABLE_ACTIVITY_LOG, null);
+        cursor2.moveToFirst();
+        Log.i("check", "count after is  for fusion" + cursor2.getInt(0));
+        cursor2.close();
+
+        db.close();
+    }
+
+
+
     public void setDayGoal(Date dayDate, int goal) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SQLiteDatabase db = this.getWritableDatabase();
@@ -166,7 +227,17 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-
+    public void setTableNotificationActivityRecords(String message, int activity, Date date) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_NOTIFICATION_MESSAGE, message);
+        values.put(KEY_ACTIVITY, activity);
+        values.put(KEY_NOTIFICATION_TIME, sf.format(date));
+        long rowinserted = db.insert(TABLE_NOTIFACTION_RECORD, null, values);
+        System.out.println("Row inserted to notification: " + rowinserted);
+        db.close();
+    }
 
     public void addNotification(Date notificationTimestamp, int sittingPeriod, int maxsittingPeriod) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -554,7 +625,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                     ad.timePeriod = ad.end.getTime() - ad.start.getTime();
                     userActivities.add(ad);
 
-                    System.out.println("Activity:"+ ad.activityType+"Time: "+logCursor.getString(1) + "-" + logCursor.getString(2));
+                    System.out.println("Activity:" + ad.activityType + "Time: " + logCursor.getString(1) + "-" + logCursor.getString(2));
 
 
                     //System.out.println(logCursor.getString(0)+"   "+ logCursor.getLong(1));
@@ -571,27 +642,103 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     }
 
+    public ArrayList<ActivityDetails> fetchAllFusedActivitiesToday(Date date) throws ParseException {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        date.setHours(0);
+        date.setMinutes(0);
+        date.setSeconds(0);
+
+
+        String startTime = sf.format(date);
+        date.setHours(23);
+        date.setMinutes(59);
+        date.setSeconds(59);
+        String endTime = sf.format(date);
+        ArrayList<ActivityDetails> userActivities = new ArrayList<ActivityDetails>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        //Cursor logCursor=db.rawQuery("Select activity,sum(timeperiod) from tbl_activity_log where end  between \""+startTime+"\" and \""+endTime+"\" group by activity",null );
+        Cursor logCursor = db.rawQuery("Select activity,start,end,nofsteps,timeperiod from tbl_fused_activity_log where end  between \"" + startTime + "\" and \"" + endTime + "\" and discarded=0 order by end", null);
+        //SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if (logCursor != null) {
+            if (logCursor.moveToFirst()) {
+                do {
+                    ActivityDetails ad = new ActivityDetails();
+                    ad.activityType = logCursor.getInt(0);
+                    ad.start = sf.parse(logCursor.getString(1));
+                    ad.end = sf.parse(logCursor.getString(2));
+                    ad.noOfSteps = logCursor.getInt(3);
+                    ad.timePeriod = ad.end.getTime() - ad.start.getTime();
+                    userActivities.add(ad);
+
+                    System.out.println("Activity:" + ad.activityType + "Time: " + logCursor.getString(1) + "-" + logCursor.getString(2));
+
+
+                    //System.out.println(logCursor.getString(0)+"   "+ logCursor.getLong(1));
+
+                } while (logCursor.moveToNext());
+
+            }
+        }
+        logCursor.close();
+        db.close();
+        return userActivities;
+    }
+
+
+    public void deleteFromActivityTable(Date date) throws ParseException {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String endTime = sf.format(date);
+
+        date.setHours(0);
+        date.setMinutes(0);
+        date.setSeconds(0);
+        String startTime = sf.format(date);
+
+        ArrayList<ActivityDetails> userActivities = new ArrayList<ActivityDetails>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        //Cursor logCursor=db.rawQuery("Select activity,sum(timeperiod) from tbl_activity_log where end  between \""+startTime+"\" and \""+endTime+"\" group by activity",null );
+        Cursor cursor = db.rawQuery("SELECT COUNT (*) FROM tbl_activity_log", null);
+        cursor.moveToFirst();
+        Log.i("check", "count before is  for main" + cursor.getInt(0));
+        cursor.close();
+        String deleteQuery = "delete from tbl_activity_log where end  between \"" + startTime + "\" and \"" + endTime + "\"";
+        Log.i("check", "delete query is " + deleteQuery);
+
+        db.rawQuery(deleteQuery, null).moveToFirst();
+
+        Cursor cursor2 = db.rawQuery("SELECT COUNT (*) FROM tbl_activity_log", null);
+        cursor2.moveToFirst();
+        Log.i("check", "count after is  for main" + cursor2.getInt(0));
+        cursor2.close();
+
+//        Log.i("check", "deletion done" + logCursor.getCount());
+//        logCursor.close();
+        db.close();
+    }
+
+
+
     public int getDayDataFromActivityLog(Date date) {
         int stepCount;
         //Make sure that date format and column format is consistent
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateString = simpleDateFormat.format(date);
-        String fetchDateOnly = dateString.substring(0,10);
+        String fetchDateOnly = dateString.substring(0, 10);
         Log.i("cursor_db", fetchDateOnly);
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] selectionArgs = new String[] { "%" + fetchDateOnly + "%" };
-        Cursor cursor = db.rawQuery("SELECT " + "SUM (" + NO_OF_STEPS + ")" + " FROM "  + TABLE_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs);
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT " + "SUM (" + NO_OF_STEPS + ")" + " FROM " + TABLE_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs);
 //        db.close();
-        if(cursor.moveToFirst()) {
-            Log.i("cursor_log", "today steps are " +  Integer.toString(cursor.getInt(0)));
+        if (cursor.moveToFirst()) {
+            Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
             stepCount = cursor.getInt(0);
-        }
-        else
+        } else
             stepCount = 7000;
 
         cursor.close();
         db.close();
-        return  stepCount;
+        return stepCount;
     }
 
     public int getDayGoal(Date date) {
@@ -599,22 +746,53 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         //Make sure that date format and column format is consistent
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateString = simpleDateFormat.format(date);
-        String fetchDateOnly = dateString.substring(0,10);
+        String fetchDateOnly = dateString.substring(0, 10);
         Log.i("cursor_db", fetchDateOnly);
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] selectionArgs = new String[] { "%" + fetchDateOnly + "%" };
-        Cursor cursor = db.rawQuery("SELECT " + KEY_GOAL + " FROM "  + TABLE_GOAL_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT " + KEY_GOAL + " FROM " + TABLE_GOAL_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
 //        db.close();
-        if(cursor.moveToFirst()) {
-            Log.i("cursor_log", "today steps are " +  Integer.toString(cursor.getInt(0)));
+        if (cursor.moveToFirst()) {
+            Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
             dayGoal = cursor.getInt(0);
-        }
-        else
+        } else
             dayGoal = 7000;
 
         cursor.close();
         db.close();
-        return  dayGoal;
+        return dayGoal;
+    }
+
+    public ArrayList<NotificationModel> getDayNotification(Date date) {
+        //Make sure that date format and column format is consistent
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = simpleDateFormat.format(date);
+        String fetchDateOnly = dateString.substring(0, 10);
+
+        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT " + KEY_NOTIFICATION_MESSAGE + ", " + KEY_ACTIVITY + ", " + KEY_NOTIFICATION_TIME + "  FROM "
+                + TABLE_NOTIFACTION_RECORD + " WHERE " + KEY_NOTIFICATION_TIME + " LIKE  ?", selectionArgs);
+//        db.close();
+        ArrayList<NotificationModel> notificationModels = new ArrayList<NotificationModel>();
+        Log.i("check", "cursor length is " + cursor.getCount());
+
+        if (cursor.moveToFirst()) {
+            NotificationModel notificationModel = new NotificationModel(cursor.getString(0)
+                    , Integer.parseInt(cursor.getString(1)), cursor.getString(2));
+            notificationModels.add(notificationModel);
+            while (cursor.moveToNext()) {
+                NotificationModel notificationModel1 = new NotificationModel(cursor.getString(0),
+                     Integer.parseInt(cursor.getString(1)), cursor.getString(2));
+                notificationModels.add(notificationModel1);
+            }
+        }
+        Log.i("check", "arraylist notification length is " + notificationModels.size());
+
+        cursor.close();
+        db.close();
+        return notificationModels;
     }
 }
-	
+

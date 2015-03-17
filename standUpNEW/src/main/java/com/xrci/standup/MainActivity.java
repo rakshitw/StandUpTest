@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -30,8 +31,8 @@ import com.facebook.widget.ProfilePictureView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.DetectedActivity;
+import com.xrci.standup.utility.FusedDataModel;
 import com.xrci.standup.views.CircleView;
-import com.xrci.standup.views.DailyStatisticsCircle;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,9 +51,10 @@ public class MainActivity extends Activity {
     private CharSequence mTitle;
     private ProfilePictureView profilePictureView;
     private TextView textViewUserName, textViewPcSyncId;
-    private DailyStatisticsCircle dSc;
+//    private DailyStatisticsCircle dSc;
     static private boolean userIsWorking = false;
     static private Date workingSinceTimeStamp;
+
     DatabaseHandler dbHandler;
 
 
@@ -125,7 +127,7 @@ public class MainActivity extends Activity {
 
             // Initializing
             //dataList = new ArrayList<DrawerItem>();
-                mTitle = mDrawerTitle = getTitle();
+            mTitle = mDrawerTitle = getTitle();
             mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
             //mDrawerList = (ListView) findViewById(R.id.left_drawer);
 
@@ -135,7 +137,7 @@ public class MainActivity extends Activity {
 
             dbHandler = new DatabaseHandler(this);
 
-            dSc = (DailyStatisticsCircle) findViewById(R.id.dailyStatisiticsCircle);
+//            dSc = (DailyStatisticsCircle) findViewById(R.id.dailyStatisiticsCircle);
 
 
             getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -233,17 +235,16 @@ public class MainActivity extends Activity {
     }
 
     /**
-     *
      * @param stepCircle
      */
-    public void switchStepCircle(View stepCircle){
+    public void switchStepCircle(View stepCircle) {
         CircleView switchCircle = (CircleView) stepCircle;
 //        switchCircle.init();
-        if(!isGoalCircle) {
+        if (!isGoalCircle) {
             setTodayGoal();
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString("tempSteps",  switchCircle.getTextLine1());
+            editor.putString("tempSteps", switchCircle.getTextLine1());
             editor.commit();
             int steps = getTodayGoal();
             switchCircle.setTextLine1(steps + "");
@@ -251,7 +252,7 @@ public class MainActivity extends Activity {
             switchCircle.invalidate();
             isGoalCircle = true;
 
-        } else{
+        } else {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
             String tempSteps = preferences.getString("tempSteps", "0");
             switchCircle.setTextLine1(tempSteps);
@@ -298,7 +299,7 @@ public class MainActivity extends Activity {
 
     }
 
-    private int getTodayGoal(){
+    private int getTodayGoal() {
         Calendar cal = GregorianCalendar.getInstance();
         cal.setTime(new Date());
         Date today = cal.getTime();
@@ -364,8 +365,8 @@ public class MainActivity extends Activity {
             int bikeTime = (int) timePeriods[DetectedActivity.ON_BICYCLE];
 
             int workingTime = (int) timePeriods[utils.ACTIVITY_WORKING];
-            dSc.setArcStartEndAngles(stillTime, walkTime, vehicleTime, bikeTime, workingTime);
-            dSc.init();
+//            dSc.setArcStartEndAngles(stillTime, walkTime, vehicleTime, bikeTime, workingTime);
+//            dSc.init();
         } catch (Exception e) {
             Logger.appendLog("Exception in refreshStatisticsCircle(MainActivity):" + e.getMessage(), true);
         }
@@ -383,6 +384,8 @@ public class MainActivity extends Activity {
                 try {
 
                     boolean refreshTimeLineOnly = intent.getBooleanExtra(StepService.REFRESH_TIMELINE_ONLY_STOP_LISTENING, false);
+                    boolean refreshFusedTimeLine = intent.getBooleanExtra(StepService.STEPS_FUSE, false);
+
                     boolean updateStepsOnly = intent.getBooleanExtra(StepService.UPDATE_STEPS_ONLY, false);
                     Log.i(TAG, "UPDATE_STEPS_ONLY" + updateStepsOnly);
                     if (updateStepsOnly) {
@@ -391,6 +394,11 @@ public class MainActivity extends Activity {
                         updateSteps(steps, todaySteps);
                         Log.i(TAG, "No of steps:" + steps);
                         Log.i(TAG, "intent today steps " + todaySteps);
+                    }
+                    if(refreshFusedTimeLine){
+                        UpdateTableForFusedTimelineForMain updateTableForFusedTimelineForMain = new UpdateTableForFusedTimelineForMain();
+                        updateTableForFusedTimelineForMain.execute();
+
                     }
                     if (refreshTimeLineOnly) {
                         //if(workingSinceTimeStamp!=null)
@@ -552,17 +560,44 @@ public class MainActivity extends Activity {
 
     protected void refreshTimeLine() {
         // TODO Auto-generated method stub
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean isFused =  preferences.getBoolean("isFusedTimeLine", false);
+        if(!isFused) {
+            ArrayList<ActivityDetails> userActivities;
+            try {
+                userActivities = dbHandler.fetchAllActivitiesToday(Calendar.getInstance().getTime());
+                if (userActivities.size() > 0)
+                    fragment.refreshTimeLine(this, userActivities);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                Logger.appendLog("Exception in refreshTimeLine(MainActivity):" + e.getMessage(), true);
+
+            }
+//            refreshStatisticsCircle();
+        }
+
+
+    }
+
+    protected void refreshFusedTimeLine() {
+        // TODO Auto-generated method stub
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("isFusedTimeLine", true);
+        editor.commit();
+
         ArrayList<ActivityDetails> userActivities;
         try {
-            userActivities = dbHandler.fetchAllActivitiesToday(Calendar.getInstance().getTime());
+            Date date = Calendar.getInstance().getTime();
+            userActivities = dbHandler.fetchAllFusedActivitiesToday(date);
+            Log.i(TAG, "user activities to be printed = " + userActivities.size());
             if (userActivities.size() > 0)
                 fragment.refreshTimeLine(this, userActivities);
         } catch (Exception e) {
             // TODO Auto-generated catch block
-            Logger.appendLog("Exception in refreshTimeLine(MainActivity):" + e.getMessage(), true);
+            Log.i(TAG, "Exception in refreshTimeLine(MainActivity):" + e.getMessage());
 
         }
-        refreshStatisticsCircle();
 
 
     }
@@ -603,7 +638,7 @@ public class MainActivity extends Activity {
     void stopListeningFromMonitoringService() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
     }
-	/*
+    /*
 	void startListeningFromGCMService()
 	{
 		LocalBroadcastManager.getInstance(this).registerReceiver((receiverGCM), new IntentFilter(GcmIntentService.GCM_MESSAGE_INTENT));
@@ -683,11 +718,6 @@ public class MainActivity extends Activity {
             return true;
         }
 
-        if(item.getItemId() == R.id.action_weekly) {
-            Intent intent = new Intent(this, WeeklyActivity.class);
-            startActivity(intent);
-        }
-
         return false;
     }
 
@@ -698,6 +728,10 @@ public class MainActivity extends Activity {
             Intent intent = new Intent(getApplicationContext(), FirstScreenActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.putExtra("showLogout", true);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean(BasicInformationForm.registrationFormFilled, false);
+            editor.commit();
             finish();
             startActivity(intent);
         } catch (Exception e) {
@@ -715,15 +749,21 @@ public class MainActivity extends Activity {
             profilePictureView.setCropped(true);
 
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            userName = preferences.getString("name", "");
+            String email = preferences.getString("registrationEmail", "");
             fbid = preferences.getString("fbid", "");
+            userName = preferences.getString("name", "");
+//            int userId = preferences.getInt("userId", 0);
             boolean withoutFB = preferences.getBoolean("withoutFB", false);
+//            String firstName = userName;
+//            if (userName.contains(" ")) {
+//                firstName = userName.substring(0, userName.indexOf(" "));
+//            }
             if (!userName.isEmpty())
                 textViewUserName.setText(userName);
             if (!fbid.isEmpty()) {
                 if (!withoutFB)
                     profilePictureView.setProfileId(fbid);
-                textViewPcSyncId.setText(fbid);
+                textViewPcSyncId.setText(email);
             }
 
 
@@ -777,6 +817,139 @@ public class MainActivity extends Activity {
         // TODO Auto-generated method stub
 
     }
+
+    public void onNotifications(View view) {
+        Intent intent = new Intent(this, NotificationLogActivity.class);
+        startActivity(intent);
+    }
+
+    public void onWeek(View view) {
+
+        Intent intent = new Intent(this, WeeklyActivity.class);
+        startActivity(intent);
+
+    }
+
+    //TODO remove hard coded stuff
+//    public void onFusedClick(View view) {
+//        TextView fusedTimeLine = (TextView) findViewById(R.id.textFusedTimeline);
+//
+//        if (fusedTimeLine.getText().equals("Show Fused Timeline")) {
+//            ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline();
+//            showFusedTimeline.execute();
+//        } else if (fusedTimeLine.getText().equals("Back to Live Timeline")) {
+//            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//            SharedPreferences.Editor editor = sharedPreferences.edit();
+//            editor.putBoolean("isFusedTimeLine", false);
+//            editor.commit();
+//
+//            refreshTimeLine();
+//            fusedTimeLine.setText("Show Fused Timeline");
+//            TextView timelineStatus = (TextView) findViewById(R.id.timelineStatusTextView);
+//            timelineStatus.setText("Currently Showing Live Timeline");
+//
+//        }
+//
+//    }
+
+    public class UpdateTableForFusedTimelineForMain extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            int userid = sharedPreferences.getInt("userId", 1);
+            Log.i("check", "updating table for timeline");
+            String response = FusedDataModel.getFusedDataForMainTimeline(Calendar.getInstance().getTime(), userid, dbHandler);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Log.i("check", "refreshing timeline now");
+            refreshTimeLine();
+        }
+    }
+
+
+//    public class ShowFusedTimeline extends AsyncTask<Void, Void, String> {
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            TextView fusedTimeLine = (TextView) findViewById(R.id.textFusedTimeline);
+//            fusedTimeLine.setText("Fusing Timeline...");
+//        }
+//
+//        @Override
+//        protected String doInBackground(Void... params) {
+//            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//            int userid = sharedPreferences.getInt("userId", 1);
+//            String response = FusedDataModel.getFusedData(Calendar.getInstance().getTime(),userid, dbHandler);
+//            return response;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String response) {
+//            super.onPostExecute(response);
+//
+//            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+//
+//            if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION)) {
+//
+//                alertDialogBuilder.setTitle("Internet Connection Unavailable");
+//
+//                alertDialogBuilder
+//                        .setMessage("Check your internet connection and try again.")
+//                        .setCancelable(true)
+//                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                // if this button is clicked, just close
+//                                // the dialog box and do nothing
+//                                dialog.cancel();
+//                            }
+//                        });
+//
+//                // create alert dialog
+//                AlertDialog alertDialog = alertDialogBuilder.create();
+//                // show it
+//                alertDialog.show();
+//
+//
+//            } else if (response.equals(PostData.INVALID_PAYLOAD)) {
+//
+//
+//                alertDialogBuilder.setTitle("Oops");
+//
+//                alertDialogBuilder
+//                        .setMessage("This is embarrassing . Something went wrong.")
+//                        .setCancelable(true)
+//                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                // if this button is clicked, just close
+//                                // the dialog box and do nothing
+//                                dialog.cancel();
+//                            }
+//                        });
+//
+//                // create alert dialog
+//                AlertDialog alertDialog = alertDialogBuilder.create();
+//                // show it
+//                alertDialog.show();
+//
+//            }
+//
+//            refreshFusedTimeLine();
+//            TextView timelineStatus = (TextView) findViewById(R.id.timelineStatusTextView);
+//            timelineStatus.setText("Currently Showing Fused Timeline");
+//            TextView fusedTimeLine = (TextView) findViewById(R.id.textFusedTimeline);
+//            fusedTimeLine.setText("Back to Live Timeline");
+//        }
+//    }
 
 
 
