@@ -39,6 +39,7 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.xrci.standup.utility.PostActivityDetailsModel;
+import com.xrci.standup.utility.PostNotificationModel;
 
 import org.json.JSONArray;
 
@@ -112,9 +113,10 @@ public class StepService extends Service implements SensorEventListener {
     private static final String GOALSETDAY = "goalsetday";
     private boolean isUserValidated = false;
     private JSONArray entityArray;
+    private JSONArray notificationArray;
     private int userId;
     private Date lastNotificationTime = Calendar.getInstance().getTime();
-    private long sittingNotificationTime = 40 * 60 * 1000; //25 minutes
+    private long sittingNotificationTime = 40 * 60 * 1000; //40 minutes
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
@@ -243,8 +245,9 @@ public class StepService extends Service implements SensorEventListener {
         editor.commit();
 
 
-        //initialize entityArray
+        //initialize entityArray and notification array
         entityArray = new JSONArray();
+        notificationArray = new JSONArray();
 
 //        Log.i(TAG, "is user validated " + isUserValidated );
 //        Log.i(TAG, "authentication response is " + response);
@@ -264,7 +267,7 @@ public class StepService extends Service implements SensorEventListener {
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        showAlert("service started at " + Calendar.getInstance().getTime());
+//        showAlert("service started at " + Calendar.getInstance().getTime());
         //Set step goal
         setTodayGoal();
 //        Logger.appendLog("service started", true);
@@ -402,6 +405,7 @@ public class StepService extends Service implements SensorEventListener {
                         dbHandler.setTableNotificationActivityRecords(displayText, DetectedActivity.STILL, curr_time);
 
                         showAlert(displayText);
+                       sendNotificationToServer(curr_time, displayText, DetectedActivity.STILL, 0);
                     }
 
 
@@ -709,6 +713,7 @@ public class StepService extends Service implements SensorEventListener {
                             String message = "Goal Achieved: " + todaygoal + " steps taken";
                             showAlert(message);
                             dbHandler.setTableNotificationActivityRecords(message, DetectedActivity.ON_FOOT, curr_time);
+                            sendNotificationToServer(curr_time, message,DetectedActivity.ON_FOOT, todaygoal);
                         }
                         updateActivityUI(DetectedActivity.ON_FOOT, start_time
                                 , intermediate_timeperiod, false, true, intermediateStepCount, false, todaysteps, false);
@@ -973,6 +978,44 @@ public class StepService extends Service implements SensorEventListener {
 
     }
 
+    private void sendNotificationToServer(Date notificationTime, String message, int typeId, int steps) {
+        //TODO change this format at server
+        Log.i(TAG, "entity length before send  " + notificationArray.length());
+//        Toast.makeText(,"entity length before send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+        //TODO remove the below type id assignment
+        userId = getUserId();
+
+        Log.i(TAG, "userId is " + userId);
+        PostNotificationModel postNotificationModel = new PostNotificationModel(
+                notificationTime, message, 1, userId, typeId, steps);
+
+        postNotificationModel.getPostNotificationJSON(notificationArray);
+//        Toast.makeText(getApplicationContext(),"entity length inside send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "length inside notification send " + notificationArray.length());
+        String notificationPayload = notificationArray.toString();
+        Log.i(TAG, "post notification payload is " + notificationPayload);
+        String result = PostData.postContent(PostNotificationModel.postNotificationURI, notificationPayload);
+        Log.i(TAG, "postActivity notification is " + result);
+        if (result.equals(PostData.INVALID_PAYLOAD)) {
+            //TODO: get more than just error from server, discarding array for now
+            notificationArray = new JSONArray();
+
+        } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
+            //Do nothing
+        } else {
+            Log.i(TAG, "sent activity result is " + result);
+            notificationArray = new JSONArray();
+        }
+        Log.i(TAG, "entity length after send is " + notificationArray.length());
+//        Toast.makeText(getApplicationContext(),"entity length after send is "
+//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+
+    }
+
+
+
 
     public int getUserId() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -1051,34 +1094,45 @@ public class StepService extends Service implements SensorEventListener {
                 String message = "Go for more than 4000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert(message);
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 4000);
+
             } else if (steps < 5000) {
                 dbHandler.setDayGoal(today, 5000);
-                String message = "Go for more than 4000 steps today";
+                String message = "Go for more than 5000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert("Go for more than 5000 steps today");
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 5000);
+
             } else if (steps < 6000) {
                 dbHandler.setDayGoal(today, 6000);
-                String message = "Go for more than 4000 steps today";
+                String message = "Go for more than 6000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert("Go for more than 6000 steps today");
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 6000);
+
             } else if (steps < 7000) {
                 dbHandler.setDayGoal(today, 7000);
                 String message = "Go for more than 7000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert(message);
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 7000);
+
 
             } else if (steps < 8000) {
                 dbHandler.setDayGoal(today, 8000);
                 String message = "Doing great! Now strive for 8000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert(message);
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 8000);
+
             } else {
                 dbHandler.setDayGoal(today, 9000);
                 String message = "You are doing awesome, let us strive for 9000 steps today";
                 dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
                 showAlert(message);
-            }
+                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 9000);
 
+            }
             SharedPreferences.Editor editor = preferences.edit();
             editor.putLong(GOALSETDAY, today.getTime());
             editor.commit();
@@ -1115,6 +1169,9 @@ public class StepService extends Service implements SensorEventListener {
         mBuilder.setContentIntent(pIntent);
         mNotificationManager.notify(2, mBuilder.build());
     }
+
+
+
 
 
 }

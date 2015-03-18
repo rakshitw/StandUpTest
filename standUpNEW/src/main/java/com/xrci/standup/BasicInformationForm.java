@@ -140,6 +140,7 @@ public class BasicInformationForm extends Activity {
             AuthenticationModel authModel = new AuthenticationModel(nameString
                     , emailString, "facebook", fbid, Calendar.getInstance().getTime(), "M", organizationString, ageString, weightString);
             String response = authModel.verifyAuthentication();
+            Log.i("check", "authentication response is " + response);
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
