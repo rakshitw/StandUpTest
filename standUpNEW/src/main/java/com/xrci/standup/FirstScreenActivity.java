@@ -14,7 +14,6 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,13 +73,13 @@ public class FirstScreenActivity extends Activity {
 	    };
 	 private UiLifecycleHelper uiHelper;
 	private boolean nextActivityInitiated=false;
-	private Button registerButton;
+//	private Button registerButton;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.firstscreen_layout);
 		login_button=(LoginButton)findViewById(R.id.login_button);
-		registerButton=(Button)findViewById(R.id.buttonRegisterFirstScreen);
+//		registerButton=(Button)findViewById(R.id.buttonRegisterFirstScreen);
 		uiHelper = new UiLifecycleHelper(this, callback);
         uiHelper.onCreate(savedInstanceState);
         Intent intent=getIntent();
@@ -90,7 +89,7 @@ public class FirstScreenActivity extends Activity {
 		{
 			System.out.println("In if");
 			login_button.setVisibility(View.VISIBLE);
-			registerButton.setVisibility(View.INVISIBLE);
+//			registerButton.setVisibility(View.INVISIBLE);
 		}
 		else
 		{
@@ -105,7 +104,7 @@ public class FirstScreenActivity extends Activity {
    		       	if(preferences.getBoolean("withoutFB", false))
    		       	{
    		       		login_button.setVisibility(View.INVISIBLE);
-   		       		registerButton.setVisibility(View.INVISIBLE);
+//   		       		registerButton.setVisibility(View.INVISIBLE);
    		       	new Handler().postDelayed(new Runnable(){
   		          @Override
   		          public void run() {
@@ -240,7 +239,7 @@ public class FirstScreenActivity extends Activity {
     	if(!nextActivityInitiated)
     	{
     	login_button.setVisibility(View.INVISIBLE);
-    	registerButton.setVisibility(View.INVISIBLE);
+//    	registerButton.setVisibility(View.INVISIBLE);
     	nextActivityInitiated=true;
 			
 			new Handler().postDelayed(new Runnable(){
@@ -501,15 +500,15 @@ public class FirstScreenActivity extends Activity {
     	return sf.format(Calendar.getInstance().getTime());
     }
     
-    public void openRegisterScreen (View v)
-    {
-    	
-    	Intent intent=new Intent(this,RegisterScreenActivity.class);
-    	finish();
-    	startActivity(intent);
-    	
-    	
-    }
+//    public void openRegisterScreen (View v)
+//    {
+//
+//    	Intent intent=new Intent(this,RegisterScreenActivity.class);
+//    	finish();
+//    	startActivity(intent);
+//
+//
+//    }
     
     
 

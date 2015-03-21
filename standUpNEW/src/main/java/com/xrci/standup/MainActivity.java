@@ -270,27 +270,79 @@ public class MainActivity extends Activity {
         Calendar cal1 = GregorianCalendar.getInstance();
         cal1.setTime(new Date());
         Date today = cal1.getTime();
-        if (!fmt.format(storedDate).equals(fmt.format(today))) {
 
+        if (!fmt.format(storedDate).equals(fmt.format(today))) {
             Calendar cal2 = GregorianCalendar.getInstance();
             cal2.setTime(new Date());
             cal2.add(Calendar.DAY_OF_YEAR, -1);
             Date yesterday = cal2.getTime();
+            int prevGoal = dbHandler.getDayGoal(yesterday);
             int steps = dbHandler.getDayDataFromActivityLog(yesterday);
-            if (steps < 3000)
-                dbHandler.setDayGoal(today, 3000);
-            else if (steps < 4000)
-                dbHandler.setDayGoal(today, 4000);
-            else if (steps < 5000)
-                dbHandler.setDayGoal(today, 5000);
-            else if (steps < 6000)
-                dbHandler.setDayGoal(today, 6000);
-            else if (steps < 7000)
-                dbHandler.setDayGoal(today, 7000);
-            else if (steps < 8000)
-                dbHandler.setDayGoal(today, 8000);
-            else
-                dbHandler.setDayGoal(today, 9000);
+            String message;
+            int goal;
+            if (steps < 4000) {
+                goal = 4000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
+            } else if (steps < 5000) {
+                goal = 5000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
+            } else if (steps < 6000) {
+                goal = 6000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
+            } else if (steps < 7000) {
+                goal = 7000;
+
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
+            } else if (steps < 8000) {
+                goal = 8000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Doing great! Now strive for " + goal + " steps today";
+            } else if (steps < 9000) {
+                goal = 9000;
+
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Doing great! Now strive for " + goal + " steps today";
+            } else {
+                goal = 10000;
+
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "You are doing awesome, let us strive for " + goal + " steps today";
+            }
+
+
+            dbHandler.setDayGoal(today, goal);
 
             SharedPreferences.Editor editor = preferences.edit();
             editor.putLong(GOALSETDAY, today.getTime());
@@ -298,6 +350,66 @@ public class MainActivity extends Activity {
         }
 
     }
+
+//    public void setTodayGoal() {
+//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        Date storedDate = new Date(preferences.getLong(GOALSETDAY, 0));
+//        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+//        Calendar cal1 = GregorianCalendar.getInstance();
+//        cal1.setTime(new Date());
+//        Date today = cal1.getTime();
+//
+//        if (!fmt.format(storedDate).equals(fmt.format(today))) {
+//            goalAchievedNotification = false;
+//            Calendar cal2 = GregorianCalendar.getInstance();
+//            cal2.setTime(new Date());
+//            cal2.add(Calendar.DAY_OF_YEAR, -1);
+//            Date yesterday = cal2.getTime();
+//            String message;
+//            int goal;
+//            int steps = dbHandler.getDayDataFromActivityLog(yesterday);
+//            if (steps < 4000) {
+//                goal = 4000;
+//                message = "Go for more than 4000 steps today";
+//            } else if (steps < 5000) {
+//                goal = 5000;
+//                message = "Go for more than 5000 steps today";
+//            } else if (steps < 6000) {
+//                goal = 6000;
+//                message = "Go for more than 6000 steps today";
+//            } else if (steps < 7000) {
+//                goal = 7000;
+//                message = "Go for more than 7000 steps today";
+//            } else if (steps < 8000) {
+//                goal = 8000;
+//                message = "Doing great! Now strive for 8000 steps today";
+//            } else if (steps < 9000) {
+//                goal = 9000;
+//                message = "Doing great! Now strive for 9000 steps today";
+//            } else {
+//                goal = 10000;
+//                message = "You are doing awesome, let us strive for 10000 steps today";
+//            }
+//
+//            if (prevGoal > goal){
+//                goal = (goal + prevGoal)/2;
+//            }
+//            float goalRound = goal/1000;
+//            goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+//
+//            dbHandler.setDayGoal(today, goal);
+//            dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
+//            showAlert(message);
+//            sendNotificationToServer(today, message, DetectedActivity.ON_FOOT, 4000);
+//
+//            SharedPreferences.Editor editor = preferences.edit();
+//            editor.putLong(GOALSETDAY, today.getTime());
+//            editor.commit();
+//
+//        }
+//
+//    }
+
 
     private int getTodayGoal() {
         Calendar cal = GregorianCalendar.getInstance();
@@ -709,11 +821,12 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // The action bar home/up action should open or close the drawer.
         // ActionBarDrawerToggle will take care of this.
-        if (item.getItemId() == R.id.action_settings) {
-            Intent i = new Intent(this, SettingsActivity.class);
-            startActivity(i);
+//        if (item.getItemId() == R.id.action_settings) {
+//            Intent i = new Intent(this, SettingsActivity.class);
+//            startActivity(i);
 
-        } else if (mDrawerToggle.onOptionsItemSelected(item)) {
+//        }
+     if (mDrawerToggle.onOptionsItemSelected(item)) {
 
             return true;
         }
@@ -828,6 +941,11 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, WeeklyActivity.class);
         startActivity(intent);
 
+    }
+
+    public void onCustomize(View view) {
+        Intent i = new Intent(this, SettingsActivity.class);
+        startActivity(i);
     }
 
     //TODO remove hard coded stuff

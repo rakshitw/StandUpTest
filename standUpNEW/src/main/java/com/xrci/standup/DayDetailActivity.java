@@ -106,14 +106,14 @@ public class DayDetailActivity extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (item.getItemId() == R.id.action_settings) {
-            Intent i = new Intent(this, SettingsActivity.class);
-            startActivity(i);
-
-        }
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (item.getItemId() == R.id.action_settings) {
+//            Intent i = new Intent(this, SettingsActivity.class);
+//            startActivity(i);
+//
+//        }
         //TODO uncommenting this breaks moving to parent activity
 //
 //        else if (mDrawerToggle.onOptionsItemSelected(item)) {

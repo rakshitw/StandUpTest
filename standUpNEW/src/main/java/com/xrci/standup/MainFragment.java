@@ -152,7 +152,7 @@ public class MainFragment extends Fragment {
                 }
                 j = 1;
                 nextActivityDetail = userActivities.get(i + j);
-                while (activityDetail.activityType == nextActivityDetail.activityType
+                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180*1000)
                         && (i + j + 1) < userActivities.size() - 1) {
                     activityDetail.end = nextActivityDetail.end;
                     activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetail.timePeriod;

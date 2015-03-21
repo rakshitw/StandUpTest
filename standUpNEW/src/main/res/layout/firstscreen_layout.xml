@@ -46,18 +46,20 @@
         android:layout_height="0dp"
         android:layout_weight="0.1" />
 
-    <Button
-        android:id="@+id/buttonRegisterFirstScreen"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_weight="0.1"
-        android:background="#747474"
-        android:onClick="openRegisterScreen"
-        android:text="Register"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold" />
+    <!-- Uncomment below and add extra code to unable registration without fb -->
+
+    <!--<Button-->
+        <!--android:id="@+id/buttonRegisterFirstScreen"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:layout_marginLeft="10dp"-->
+        <!--android:layout_marginRight="10dp"-->
+        <!--android:layout_weight="0.1"-->
+        <!--android:background="#747474"-->
+        <!--android:onClick="openRegisterScreen"-->
+        <!--android:text="Register"-->
+        <!--android:textColor="#FFFFFF"-->
+        <!--android:textStyle="bold" />-->
 
     <TextView
         android:layout_width="wrap_content"

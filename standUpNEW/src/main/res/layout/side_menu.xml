@@ -126,6 +126,20 @@
             <!--android:textColor="#ff745663"-->
             <!--android:textStyle="bold" />-->
 
+        <TextView
+            android:id="@+id/textCustomize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onCustomize"
+            android:layout_margin="15dp"
+            android:paddingLeft="10dp"
+            android:text="Customize"
+            android:background="@drawable/touch_selector"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#ff745663"
+            android:textStyle="bold" />
+
 
         <TextView
             android:id="@+id/textViewLogout"

@@ -67,10 +67,10 @@ public class StepService extends Service implements SensorEventListener {
     private int final_count = 0;
     private int intermediate_count = 0;
     private int delta_value = 0;
-    private int delta_intermediate_value = 0;
+    private static int delta_intermediate_value = 0;
     private int sampling_rate = 5;  //Sample Rate for Sensor
-    private AtomicBoolean hasStepsStarted = new AtomicBoolean(false);
-    private AtomicBoolean hasStepRecordingStarted = new AtomicBoolean(false);
+    private static AtomicBoolean hasStepsStarted = new AtomicBoolean(false);
+    private static AtomicBoolean hasStepRecordingStarted = new AtomicBoolean(false);
 
 
     private Timer myTimer;
@@ -82,19 +82,19 @@ public class StepService extends Service implements SensorEventListener {
     private Value cumulative_val;
     private static final int REQUEST_OAUTH = 1;
 
-    private AtomicBoolean isStill = new AtomicBoolean(true);
+    private static AtomicBoolean isStill = new AtomicBoolean(true);
     private Date stillStartTime = Calendar.getInstance().getTime();
     private Date stillEndTime = Calendar.getInstance().getTime();
-    private AtomicBoolean hasStillStarted = new AtomicBoolean(false);
-    private AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
+    private static AtomicBoolean hasStillStarted = new AtomicBoolean(false);
+    private static AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
 
-    private AtomicBoolean isUnknown = new AtomicBoolean(false);
+    private static AtomicBoolean isUnknown = new AtomicBoolean(false);
     private Date unknownStartTime = Calendar.getInstance().getTime();
     private Date unknownEndTime = Calendar.getInstance().getTime();
     private Date pseudoStartUnknownTime = Calendar.getInstance().getTime();
     private Date pseudoEndUnknownTime = Calendar.getInstance().getTime();
-    private AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
-    private AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
+    private static AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
+    private static AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
 
 
     static final public String UPDATE_CURRENT_FRAGMENT = "com.xrci.standup.update_fragment";
@@ -120,7 +120,7 @@ public class StepService extends Service implements SensorEventListener {
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
-    private long fuseTimeGap = 15*60*1000;
+    private long fuseTimeGap = 10 * 60 * 1000;
 //    private long noNotificationRange =
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -267,7 +267,7 @@ public class StepService extends Service implements SensorEventListener {
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        showAlert("service started at " + Calendar.getInstance().getTime());
+        showAlert("service started at " + Calendar.getInstance().getTime());
         //Set step goal
         setTodayGoal();
 //        Logger.appendLog("service started", true);
@@ -375,13 +375,12 @@ public class StepService extends Service implements SensorEventListener {
 
             if (isUnknown.get()) {
                 //Do nothing
-                if(curr_time.getTime() - lastFusedTime.getTime() > fuseTimeGap ) {
+                if (curr_time.getTime() - lastFusedTime.getTime() > fuseTimeGap) {
                     Log.i(TAG, "doing fusion in unknown");
                     updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
                             , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), true);
                     lastFusedTime = curr_time;
-                }
-                else
+                } else
                     updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
                             , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
 
@@ -393,8 +392,34 @@ public class StepService extends Service implements SensorEventListener {
 //                String responseFromGet = FusedDataModel.getFusedData(2, Calendar.getInstance().getTime(), Calendar.getInstance().getTime());
 //                Log.i(TAG, "response of getfuseddata is " + responseFromGet);
                 Date notificationTime = Calendar.getInstance().getTime();
-                int hour = notificationTime.getHours();
-                if ((hour <= 22 && hour >= 7)) {
+                int notificationHour = notificationTime.getHours();
+                int notificationMinute = notificationTime.getMinutes();
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                String startTimeToCompare = sharedPreferences.getString(SettingsActivity.stopPingTimePeriodStart, "22:00");
+                String endTimeToCompare = sharedPreferences.getString(SettingsActivity.stopPingTimePeriodEnd, "07:00");
+
+                int startCompareHours = Integer.parseInt(startTimeToCompare.substring(0,2));
+                int startCompareMins = Integer.parseInt(startTimeToCompare.substring(3,5));
+                long notificationHourMin =  notificationHour*60 + notificationMinute;
+                long compareStartHourMin = startCompareHours*60 + startCompareMins;
+
+                int endCompareHours = Integer.parseInt(endTimeToCompare.substring(0,2));
+                int endCompareMins = Integer.parseInt(endTimeToCompare.substring(3,5));
+
+                long compareEndHourMin = endCompareHours*60 + endCompareMins;
+
+
+                /**
+                 * Interesting logic: if do not ping start time < do not ping end time
+                 * Then notification can be send when notification time is on either side of time line
+                 * OR
+                 * If start time > end time then notification can be send when
+                 * hour+min of notification is between end and start time
+                 */
+                if (((compareStartHourMin < compareEndHourMin) && (notificationHourMin < compareStartHourMin)
+                        ||(notificationHourMin > compareEndHourMin))
+                        || ((compareStartHourMin > compareEndHourMin) && (notificationHourMin > compareEndHourMin)
+                        && (notificationHourMin < compareStartHourMin))){
 
                     if ((curr_time.getTime() - stillStartTime.getTime()) > sittingNotificationTime
                             && (curr_time.getTime() - lastNotificationTime.getTime()) > minNotificationGapTime) {
@@ -405,7 +430,7 @@ public class StepService extends Service implements SensorEventListener {
                         dbHandler.setTableNotificationActivityRecords(displayText, DetectedActivity.STILL, curr_time);
 
                         showAlert(displayText);
-                       sendNotificationToServer(curr_time, displayText, DetectedActivity.STILL, 0);
+                        sendNotificationToServer(curr_time, displayText, DetectedActivity.STILL, 0);
                     }
 
 
@@ -428,7 +453,7 @@ public class StepService extends Service implements SensorEventListener {
 
             //TODO check the parameters
             updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true, getTotalStepsToday(0), false);
-            if (unknownStartTime.getTime() >= stillEndTime.getTime() && unknownStartTime.getTime() >= end_time.getTime() && unknownEndTime.getTime() >= unknownStartTime.getTime()) {
+            if (unknownStartTime.getTime() >= stillEndTime.getTime() && unknownStartTime.getTime() >= end_time.getTime() && (unknownEndTime.getTime() > unknownStartTime.getTime())) {
 
                 //Send to server too
                 sendActivityDetailToServer(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, 0);
@@ -713,7 +738,7 @@ public class StepService extends Service implements SensorEventListener {
                             String message = "Goal Achieved: " + todaygoal + " steps taken";
                             showAlert(message);
                             dbHandler.setTableNotificationActivityRecords(message, DetectedActivity.ON_FOOT, curr_time);
-                            sendNotificationToServer(curr_time, message,DetectedActivity.ON_FOOT, todaygoal);
+                            sendNotificationToServer(curr_time, message, DetectedActivity.ON_FOOT, todaygoal);
                         }
                         updateActivityUI(DetectedActivity.ON_FOOT, start_time
                                 , intermediate_timeperiod, false, true, intermediateStepCount, false, todaysteps, false);
@@ -1015,8 +1040,6 @@ public class StepService extends Service implements SensorEventListener {
     }
 
 
-
-
     public int getUserId() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         return preferences.getInt("userId", 0);
@@ -1076,63 +1099,88 @@ public class StepService extends Service implements SensorEventListener {
      */
 
     public void setTodayGoal() {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Date storedDate = new Date(preferences.getLong(GOALSETDAY, 0));
         SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
         Calendar cal1 = GregorianCalendar.getInstance();
         cal1.setTime(new Date());
         Date today = cal1.getTime();
+
         if (!fmt.format(storedDate).equals(fmt.format(today))) {
             goalAchievedNotification = false;
             Calendar cal2 = GregorianCalendar.getInstance();
             cal2.setTime(new Date());
             cal2.add(Calendar.DAY_OF_YEAR, -1);
             Date yesterday = cal2.getTime();
+            String message;
+            int goal;
             int steps = dbHandler.getDayDataFromActivityLog(yesterday);
+            int prevGoal = dbHandler.getDayGoal(yesterday);
             if (steps < 4000) {
-                dbHandler.setDayGoal(today, 4000);
-                String message = "Go for more than 4000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert(message);
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 4000);
-
+                goal = 4000;
+                if (prevGoal >= goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
             } else if (steps < 5000) {
-                dbHandler.setDayGoal(today, 5000);
-                String message = "Go for more than 5000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert("Go for more than 5000 steps today");
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 5000);
-
+                goal = 5000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
             } else if (steps < 6000) {
-                dbHandler.setDayGoal(today, 6000);
-                String message = "Go for more than 6000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert("Go for more than 6000 steps today");
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 6000);
-
+                goal = 6000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
             } else if (steps < 7000) {
-                dbHandler.setDayGoal(today, 7000);
-                String message = "Go for more than 7000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert(message);
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 7000);
+                goal = 7000;
 
-
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Go for more than " + goal + " steps today";
             } else if (steps < 8000) {
-                dbHandler.setDayGoal(today, 8000);
-                String message = "Doing great! Now strive for 8000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert(message);
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 8000);
+                goal = 8000;
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Doing great! Now strive for " + goal + " steps today";
+            } else if (steps < 9000) {
+                goal = 9000;
 
+                if (prevGoal > goal){
+                    goal = (goal + prevGoal)/2;
+                }
+                float goalRound = goal/1000;
+                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                message = "Doing great! Now strive for " + goal + " steps today";
             } else {
-                dbHandler.setDayGoal(today, 9000);
-                String message = "You are doing awesome, let us strive for 9000 steps today";
-                dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
-                showAlert(message);
-                sendNotificationToServer(today, message,DetectedActivity.ON_FOOT, 9000);
+                goal = 10000;
 
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
+                }
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
+                message = "You are doing awesome, let us strive for " + goal + " steps today";
             }
+            dbHandler.setDayGoal(today, goal);
+            dbHandler.setTableNotificationActivityRecords(message, 0, Calendar.getInstance().getTime());
+            showAlert(message);
+            sendNotificationToServer(today, message, DetectedActivity.ON_FOOT, goal);
+
             SharedPreferences.Editor editor = preferences.edit();
             editor.putLong(GOALSETDAY, today.getTime());
             editor.commit();
@@ -1169,9 +1217,6 @@ public class StepService extends Service implements SensorEventListener {
         mBuilder.setContentIntent(pIntent);
         mNotificationManager.notify(2, mBuilder.build());
     }
-
-
-
 
 
 }

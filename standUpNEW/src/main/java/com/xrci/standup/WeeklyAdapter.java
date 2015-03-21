@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.xrci.standup.utility.DayDetails;
 import com.xrci.standup.views.DailyStatisticsCircle;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -59,7 +60,11 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
             TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
 //            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
-            dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()) + " steps");
+            if (day.getStepsTaken() >= 10000){
+                float displpaySteps =  round((float)day.getStepsTaken()/1000, 1);
+                dailyStatistics.setCenterText(displpaySteps + "K " + " steps");
+            }else
+                dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()) + " steps");
             if (complianceCircle == null) {
                 Log.i("check", "compliance circle is null");
             } else
@@ -125,9 +130,9 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
                 complianceCircle.init();
 
             } else {
-                dailyStatistics.setArcStartEndAngles(100, 0, 0, 0, 0);
+//                dailyStatistics.setArcStartEndAngles(100, 0, 0, 0, 0);
                 dailyStatistics.init();
-                complianceCircle.setArcStartEndAngles(100, 0, 0, 0, 0);
+//                complianceCircle.setArcStartEndAngles(100, 0, 0, 0, 0);
                 complianceCircle.init();
 
 
@@ -167,6 +172,12 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             return LayoutInflater.from(getContext()).inflate(R.layout.list_item_weekly, null);
 
 
+    }
+
+    public static float round(float d, int decimalPlace) {
+        BigDecimal bd = new BigDecimal(Float.toString(d));
+        bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
+        return bd.floatValue();
     }
 
 

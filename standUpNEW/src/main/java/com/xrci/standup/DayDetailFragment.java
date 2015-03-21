@@ -177,11 +177,11 @@ public class DayDetailFragment extends Fragment {
                         j++;
                         nextActivityDetail = userActivities.get(i + j);
                     }
-                    i = i + j -1;
+                    i = i + j - 1;
                 }
                 j = 1;
                 nextActivityDetail = userActivities.get(i + j);
-                while (activityDetail.activityType == nextActivityDetail.activityType
+                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180*1000)
                         && (i + j + 1) < userActivities.size() - 1) {
                     activityDetail.end = nextActivityDetail.end;
                     activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetail.timePeriod;
@@ -190,8 +190,8 @@ public class DayDetailFragment extends Fragment {
                 }
                 i = i + j - 1;
 
-                if(activityDetail.activityType != DetectedActivity.ON_FOOT  && activityDetail.timePeriod < 180*1000 ) {
-                    if(userActivities.get(i + 1).activityType != DetectedActivity.ON_FOOT){
+                if (activityDetail.activityType != DetectedActivity.ON_FOOT && activityDetail.timePeriod < 180 * 1000) {
+                    if (userActivities.get(i + 1).activityType != DetectedActivity.ON_FOOT) {
                         ActivityDetails nextActivityDetails = userActivities.get(i + 1);
                         activityDetail.end = nextActivityDetails.end;
                         activityDetail.activityType = nextActivityDetails.activityType;
@@ -200,7 +200,6 @@ public class DayDetailFragment extends Fragment {
                     }
                 }
             }
-
 
 
             if (lastActivityEnd == null) {
@@ -222,17 +221,24 @@ public class DayDetailFragment extends Fragment {
                 } else
                     showStartTime = false;
             }
+//            if (activityDetail.timePeriod > 180 * 1000 || activityDetail.activityType == DetectedActivity.ON_FOOT) {
 
-                if (activityDetail.activityType == DetectedActivity.UNKNOWN) {
+            if (activityDetail.activityType == DetectedActivity.UNKNOWN) {
 
+//                if(previousActivity != DetectedActivity.UNKNOWN) {
+//                    Log.i("Blank activity 2", "I am there");
 
-                    BlankTimeLineElement blank = new BlankTimeLineElement(context);
-                    linearLayoutTimelineArea.addView(blank, 0);
-                } else {
-                    CompositeTimeLineElement element = new CompositeTimeLineElement(context, activityDetail.activityType, activityDetail.end.getTime() - activityDetail.start.getTime(), activityDetail.noOfSteps, activityDetail.start, activityDetail.end, showStartTime);
-                    linearLayoutTimelineArea.addView(element, 0);
-                }
-                lastActivityEnd = activityDetail.end;
+                BlankTimeLineElement blank = new BlankTimeLineElement(context);
+                linearLayoutTimelineArea.addView(blank, 0);
+//                }
+            } else {
+                CompositeTimeLineElement element = new CompositeTimeLineElement(context, activityDetail.activityType, activityDetail.end.getTime() - activityDetail.start.getTime(), activityDetail.noOfSteps, activityDetail.start, activityDetail.end, showStartTime);
+                linearLayoutTimelineArea.addView(element, 0);
+            }
+//            }
+            lastActivityEnd = activityDetail.end;
+//            previousActivity = activityDetail.activityType;
+            //System.out.println("Camsdin refreshtimeline");
 
 
         }

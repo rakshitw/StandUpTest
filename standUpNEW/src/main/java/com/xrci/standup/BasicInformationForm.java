@@ -14,8 +14,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.Spinner;
 
 import com.xrci.standup.utility.AuthenticationModel;
 
@@ -60,15 +62,25 @@ public class BasicInformationForm extends Activity {
 
     public void registerBasicInformation(View view) {
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         EditText nameEt = (EditText) findViewById(R.id.nameText);
-        EditText organizationEt = (EditText) findViewById(R.id.organizationText);
+//        EditText organizationEt = (EditText) findViewById(R.id.organizationText);
+        Spinner organizationList = (Spinner)findViewById(R.id.organizationList);
+//        organizationList.setOnItemSelectedListener(BasicInformationForm.this);
+
+
+
+
+
         EditText emailEt = (EditText) findViewById(R.id.emailText);
         EditText ageEt = (EditText) findViewById(R.id.ageText);
         EditText weightEt = (EditText) findViewById(R.id.textWeight);
         RadioButton sexRbMale = (RadioButton) findViewById(R.id.radioMale);
         RadioButton sexRbFemale = (RadioButton) findViewById(R.id.radioFemale);
+
         String nameString = nameEt.getText().toString();
-        String organizationString = organizationEt.getText().toString();
+
+        String organizationString = organizationList.getSelectedItem().toString();
         String ageString = ageEt.getText().toString();
         String weightString = weightEt.getText().toString();
         String emailString = emailEt.getText().toString();
@@ -119,17 +131,17 @@ public class BasicInformationForm extends Activity {
 
         } else {
 
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+//            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(registrationName, nameString);
             editor.putString(registrationAge, ageString);
             editor.putString(registrationWeight, weightString);
             editor.putString(registrationEmail, emailString);
             editor.putString(registrationOrganization, organizationString);
-            if (sexRbFemale.isSelected())
-                editor.putString(registrationSex, "M");
-            else
+            if (sexRbFemale.isChecked())
                 editor.putString(registrationSex, "F");
+            else
+                editor.putString(registrationSex, "M");
             editor.putBoolean(registrationFormFilled, true);
 
             editor.commit();
@@ -211,6 +223,9 @@ public class BasicInformationForm extends Activity {
                     .commit();
         }
 
+
+
+
     }
 
 
@@ -226,12 +241,12 @@ public class BasicInformationForm extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -251,6 +266,44 @@ public class BasicInformationForm extends Activity {
 
             View rootView = inflater.inflate(R.layout.fragment_basic_information_form, container, false);
 
+            Spinner dropdown = (Spinner)rootView.findViewById(R.id.organizationList);
+            String[] items = new String[]{"Xerox", "XRCI"};
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_dropdown_item, items);
+            dropdown.setAdapter(adapter);
+
+
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+            if(sharedPreferences.getString(registrationOrganization, "") != ""){
+                String myString = sharedPreferences.getString(registrationOrganization, ""); //the value you want the position for
+
+                ArrayAdapter checkAdapter = (ArrayAdapter) dropdown.getAdapter(); //cast to an ArrayAdapter
+
+                int spinnerPosition = checkAdapter.getPosition(myString);
+
+//set the default according to value
+                dropdown.setSelection(spinnerPosition);
+            }
+
+
+            EditText nameEt = (EditText) rootView.findViewById(R.id.nameText);
+            nameEt.setText(sharedPreferences.getString(registrationName, ""));
+//            EditText organizationEt = (EditText) rootView.findViewById(R.id.organizationText);
+//            organizationEt.setText(sharedPreferences.getString(registrationOrganization, ""));
+
+            EditText emailEt = (EditText) rootView.findViewById(R.id.emailText);
+            emailEt.setText(sharedPreferences.getString(registrationEmail, ""));
+            EditText ageEt = (EditText) rootView.findViewById(R.id.ageText);
+            ageEt.setText(sharedPreferences.getString(registrationAge, ""));
+            EditText weightEt = (EditText) rootView.findViewById(R.id.textWeight);
+            weightEt.setText(sharedPreferences.getString(registrationWeight, ""));
+            RadioButton sexRbMale = (RadioButton) rootView.findViewById(R.id.radioMale);
+            RadioButton sexRbFemale = (RadioButton) rootView.findViewById(R.id.radioFemale);
+            if(sharedPreferences.getString(registrationSex, "") == "M") {
+                sexRbMale.setChecked(true);
+            }
+            else if (sharedPreferences.getString(registrationSex, "") == "F")
+                sexRbFemale.setChecked(true);
             return rootView;
         }
     }

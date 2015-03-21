@@ -756,7 +756,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
             dayGoal = cursor.getInt(0);
         } else
-            dayGoal = 7000;
+            dayGoal = 6000;
 
         cursor.close();
         db.close();

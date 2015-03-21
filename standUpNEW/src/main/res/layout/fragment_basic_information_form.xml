@@ -53,10 +53,18 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
 
-            <EditText
-                android:id="@+id/organizationText"
+            <!--<EditText-->
+                <!--android:id="@+id/organizationText"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content" />-->
+
+            <Spinner
+                android:id="@+id/organizationList"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:background="@android:drawable/btn_dropdown"
+                android:spinnerMode="dropdown" />
+
         </TableRow>
 
         <TableRow
