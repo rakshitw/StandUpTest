@@ -416,8 +416,8 @@ public class StepService extends Service implements SensorEventListener {
                  * If start time > end time then notification can be send when
                  * hour+min of notification is between end and start time
                  */
-                if (((compareStartHourMin < compareEndHourMin) && (notificationHourMin < compareStartHourMin)
-                        ||(notificationHourMin > compareEndHourMin))
+                if (((compareStartHourMin < compareEndHourMin) && ((notificationHourMin < compareStartHourMin)
+                        ||(notificationHourMin > compareEndHourMin)))
                         || ((compareStartHourMin > compareEndHourMin) && (notificationHourMin > compareEndHourMin)
                         && (notificationHourMin < compareStartHourMin))){
 
