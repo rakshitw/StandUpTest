@@ -33,6 +33,7 @@ import java.util.Timer;
  */
 public class DayDetailFragment extends Fragment {
     CircleView currentCircle;
+    CircleView complianceCircle;
     LinearLayout linearLayoutTimelineArea;
     Context context;
     Context applicationContext;
@@ -54,6 +55,7 @@ public class DayDetailFragment extends Fragment {
         context = getActivity();
         applicationContext = getActivity().getApplicationContext();
         currentCircle = (CircleView) view.findViewById(R.id.circleViewCurrent);
+        complianceCircle = (CircleView) view.findViewById(R.id.daydetailCompliance);
         linearLayoutTimelineArea = (LinearLayout) view.findViewById(R.id.linearLayoutTimelineArea);
         dbHandler = new DatabaseHandler(context);
 
@@ -61,16 +63,24 @@ public class DayDetailFragment extends Fragment {
         Calendar cal = GregorianCalendar.getInstance();
         cal.setTime(new Date());
         int steps = 0;
+        int compliance = 0;
         Intent intent = getActivity().getIntent();
         if (intent != null && intent.hasExtra(WeeklyFragment.intentFromWeekly)) {
             int position = intent.getIntExtra(WeeklyFragment.intentFromWeekly, 0);
             cal.add(Calendar.DAY_OF_YEAR, -position);
             steps = intent.getIntExtra(WeeklyFragment.intentFromWeeklySteps, 0);
+            compliance = intent.getIntExtra(WeeklyFragment.intentFromWeeklyCompliance, 0);
             daysBeforeDate = cal.getTime();
 
 
             try {
                 currentCircle.setTextLine1(Integer.toString(steps));
+                complianceCircle.setTextLine1(Integer.toString(compliance) + "%");
+                if (compliance <= 50)
+                    complianceCircle.setFillColor(utils.COLOR_STILL);
+                else
+                    complianceCircle.setFillColor(utils.COLOR_WALK);
+
                 refreshFusedTimeLine(daysBeforeDate);
 
                 ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline();

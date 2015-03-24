@@ -89,13 +89,13 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             if (achieveView != null) {
                 if (day.getGoalAchieved() != null)
                     if (day.getGoalAchieved())
-                        achieveView.setText("Goal: " + day.getDayGoal());
+                        achieveView.setText("Goal: " + day.getDayGoal() + " Steps: " + day.getStepsTaken());
                     else {
                         if (day.getStepsTaken() == 0)
-                            achieveView.setText("Goal unavailable");
+                            achieveView.setText("Information Not Available");
                         else
 
-                            achieveView.setText("Goal: " + day.getDayGoal());
+                            achieveView.setText("Goal: " + day.getDayGoal() +  "  Steps: " + day.getStepsTaken());
                     }
             }
 

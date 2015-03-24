@@ -82,19 +82,19 @@ public class StepService extends Service implements SensorEventListener {
     private Value cumulative_val;
     private static final int REQUEST_OAUTH = 1;
 
-    private static AtomicBoolean isStill = new AtomicBoolean(true);
+    private  AtomicBoolean isStill = new AtomicBoolean(true);
     private Date stillStartTime = Calendar.getInstance().getTime();
     private Date stillEndTime = Calendar.getInstance().getTime();
-    private static AtomicBoolean hasStillStarted = new AtomicBoolean(false);
-    private static AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
+    private  AtomicBoolean hasStillStarted = new AtomicBoolean(false);
+    private  AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
 
-    private static AtomicBoolean isUnknown = new AtomicBoolean(false);
+    private  AtomicBoolean isUnknown = new AtomicBoolean(false);
     private Date unknownStartTime = Calendar.getInstance().getTime();
     private Date unknownEndTime = Calendar.getInstance().getTime();
     private Date pseudoStartUnknownTime = Calendar.getInstance().getTime();
     private Date pseudoEndUnknownTime = Calendar.getInstance().getTime();
-    private static AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
-    private static AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
+    private  AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
+    private  AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
 
 
     static final public String UPDATE_CURRENT_FRAGMENT = "com.xrci.standup.update_fragment";
@@ -120,7 +120,7 @@ public class StepService extends Service implements SensorEventListener {
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
-    private long fuseTimeGap = 10 * 60 * 1000;
+    private long fuseTimeGap = 1 * 60 * 1000;
 //    private long noNotificationRange =
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -201,12 +201,38 @@ public class StepService extends Service implements SensorEventListener {
         if (mNotificationManager != null)
             mNotificationManager.cancel(1);
 
+//        Log.i("check", "stepservice is destroyed");
+        stopSelf();
 
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        /**
+         * Initializing variables in onCreate too to avoid
+         * discrepancies that may arise due to multiple stepService running..if so :/
+         */
+        start_time = Calendar.getInstance().getTime();
+        end_time = Calendar.getInstance().getTime();
+        curr_time = Calendar.getInstance().getTime();
+        prev_time = Calendar.getInstance().getTime();
+        isStill = new AtomicBoolean(true);
+        stillStartTime = Calendar.getInstance().getTime();
+        stillEndTime = Calendar.getInstance().getTime();
+        hasStillStarted = new AtomicBoolean(false);
+        hasSittingEndedByUnknown = new AtomicBoolean(false);
+
+        isUnknown = new AtomicBoolean(false);
+        unknownStartTime = Calendar.getInstance().getTime();
+        unknownEndTime = Calendar.getInstance().getTime();
+        pseudoStartUnknownTime = Calendar.getInstance().getTime();
+        pseudoEndUnknownTime = Calendar.getInstance().getTime();
+        hasUnknownRecordingStarted = new AtomicBoolean(false);
+        hasUnknownStarted = new AtomicBoolean(false);
+        lastFusedTime = Calendar.getInstance().getTime();
+        lastNotificationTime = Calendar.getInstance().getTime();
+
         //Authenticate
         preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = preferences.edit();
@@ -1197,6 +1223,7 @@ public class StepService extends Service implements SensorEventListener {
     }
 
     //
+
     protected void showAlert(String displayText) {
         // TODO Auto-generated method stub
         Intent intent = new Intent(this, MainActivity.class);

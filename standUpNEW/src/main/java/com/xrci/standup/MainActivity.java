@@ -1,6 +1,7 @@
 package com.xrci.standup;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.FragmentManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -31,7 +32,9 @@ import com.facebook.widget.ProfilePictureView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.location.DetectedActivity;
+import com.xrci.standup.utility.ComplianceModel;
 import com.xrci.standup.utility.FusedDataModel;
+import com.xrci.standup.utility.GetData;
 import com.xrci.standup.views.CircleView;
 
 import java.text.SimpleDateFormat;
@@ -51,7 +54,7 @@ public class MainActivity extends Activity {
     private CharSequence mTitle;
     private ProfilePictureView profilePictureView;
     private TextView textViewUserName, textViewPcSyncId;
-//    private DailyStatisticsCircle dSc;
+    //    private DailyStatisticsCircle dSc;
     static private boolean userIsWorking = false;
     static private Date workingSinceTimeStamp;
 
@@ -170,26 +173,38 @@ public class MainActivity extends Activity {
             setUpReceiverFromStepService();
             //setUpReceiverFromGCMService();
 
-//		startListeningFromGCMService();
+            //startListeningFromGCMService();
             refreshStatisticsCircle();
             //refreshTimeLine();
 
-
             mGesture = new GestureDetector(this, mOnGesture);
 
-
             // Rakshit
-            Intent startStepService = new Intent(getApplicationContext(), StepService.class);
-            startService(startStepService);
-            setGoogleFitHandler();
-            startListeningFromStepService();
-            startListeningFromMonitoringService();
+
+            if (!isMyServiceRunning(StepService.class)) {
+                Intent startStepService = new Intent(getApplicationContext(), StepService.class);
+                startService(startStepService);
+                setGoogleFitHandler();
+                startListeningFromStepService();
+                startListeningFromMonitoringService();
+            }
 
 
         } catch (Exception e) {
             Logger.appendLog("Exception in onCreate(MainActivity):" + e.getMessage(), true);
         }
 
+
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -282,62 +297,62 @@ public class MainActivity extends Activity {
             int goal;
             if (steps < 4000) {
                 goal = 4000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 5000) {
                 goal = 5000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 6000) {
                 goal = 6000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 7000) {
                 goal = 7000;
 
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 8000) {
                 goal = 8000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Doing great! Now strive for " + goal + " steps today";
             } else if (steps < 9000) {
                 goal = 9000;
 
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Doing great! Now strive for " + goal + " steps today";
             } else {
                 goal = 10000;
 
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "You are doing awesome, let us strive for " + goal + " steps today";
             }
 
@@ -507,7 +522,7 @@ public class MainActivity extends Activity {
                         Log.i(TAG, "No of steps:" + steps);
                         Log.i(TAG, "intent today steps " + todaySteps);
                     }
-                    if(refreshFusedTimeLine){
+                    if (refreshFusedTimeLine) {
                         UpdateTableForFusedTimelineForMain updateTableForFusedTimelineForMain = new UpdateTableForFusedTimelineForMain();
                         updateTableForFusedTimelineForMain.execute();
 
@@ -673,8 +688,8 @@ public class MainActivity extends Activity {
     protected void refreshTimeLine() {
         // TODO Auto-generated method stub
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean isFused =  preferences.getBoolean("isFusedTimeLine", false);
-        if(!isFused) {
+        boolean isFused = preferences.getBoolean("isFusedTimeLine", false);
+        if (!isFused) {
             ArrayList<ActivityDetails> userActivities;
             try {
                 userActivities = dbHandler.fetchAllActivitiesToday(Calendar.getInstance().getTime());
@@ -751,7 +766,7 @@ public class MainActivity extends Activity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
     }
     /*
-	void startListeningFromGCMService()
+    void startListeningFromGCMService()
 	{
 		LocalBroadcastManager.getInstance(this).registerReceiver((receiverGCM), new IntentFilter(GcmIntentService.GCM_MESSAGE_INTENT));
 
@@ -826,7 +841,7 @@ public class MainActivity extends Activity {
 //            startActivity(i);
 
 //        }
-     if (mDrawerToggle.onOptionsItemSelected(item)) {
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
 
             return true;
         }
@@ -948,6 +963,11 @@ public class MainActivity extends Activity {
         startActivity(i);
     }
 
+    public void onLeaderBoard(View view) {
+        Intent intent = new Intent(this, LeaderBoardActivity.class);
+        startActivity(intent);
+    }
+
     //TODO remove hard coded stuff
 //    public void onFusedClick(View view) {
 //        TextView fusedTimeLine = (TextView) findViewById(R.id.textFusedTimeline);
@@ -970,7 +990,7 @@ public class MainActivity extends Activity {
 //
 //    }
 
-    public class UpdateTableForFusedTimelineForMain extends AsyncTask<Void, Void, Void> {
+    public class UpdateTableForFusedTimelineForMain extends AsyncTask<Void, Void, String> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -978,18 +998,33 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected String doInBackground(Void... params) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             int userid = sharedPreferences.getInt("userId", 1);
-            Log.i("check", "updating table for timeline");
+            Log.i(TAG, "updating table for timeline");
             String response = FusedDataModel.getFusedDataForMainTimeline(Calendar.getInstance().getTime(), userid, dbHandler);
-            return null;
+            ComplianceModel complianceModel = new ComplianceModel(Calendar.getInstance().getTime(), userid);
+            String complianceResponse = complianceModel.getCompliance();
+            Log.i(TAG, "compliance response is " + complianceResponse);
+
+            return complianceResponse;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            Log.i("check", "refreshing timeline now");
+        protected void onPostExecute(String response) {
+            super.onPostExecute(response);
+            if (!response.equals(GetData.INVALID_RESPONSE)
+                    && !response.equals(GetData.INVALID_PAYLOAD) && !response.equals(GetData.EXCEPTION)) {
+                CircleView circleView = (CircleView) findViewById(R.id.complianceCircle);
+                circleView.setTextLine1(response + "%");
+                if(Integer.parseInt(response) >= 50) {
+                    circleView.setFillColor(utils.COLOR_WALK);
+                }
+                else
+                    circleView.setFillColor(utils.COLOR_STILL);
+
+                circleView.invalidate();
+            }
             refreshTimeLine();
         }
     }

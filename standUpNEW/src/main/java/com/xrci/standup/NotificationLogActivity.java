@@ -3,7 +3,6 @@ package com.xrci.standup;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -76,12 +75,6 @@ public class NotificationLogActivity extends Activity {
             ArrayList<NotificationModel> notificationModels = dbHandler.getDayNotification(Calendar
                     .getInstance().getTime());
 
-                for(NotificationModel notificationModel : notificationModels){
-                Log.i("Notification", "notification models length is "
-                        + notificationModel.getActivity() + " message : "
-                        + notificationModel.getMessage() + " time: "
-                        + notificationModel.getTimeString());
-            }
             View rootView = inflater.inflate(R.layout.fragment_notification_log, container, false);
             TextView dayView = (TextView) rootView.findViewById(R.id.notification_day);
             String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
@@ -92,10 +85,9 @@ public class NotificationLogActivity extends Activity {
 
             ListView mListView = (ListView) rootView.findViewById(R.id.listview_notification);
             NotificationAdapter notificationAdapter = new NotificationAdapter(getActivity()
-                    , R.layout.notification_list_item,notificationModels);
+                    , R.layout.notification_list_item, notificationModels);
 
             mListView.setAdapter(notificationAdapter);
-
 
 
             return rootView;

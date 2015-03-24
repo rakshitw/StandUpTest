@@ -2,7 +2,10 @@ package com.xrci.standup;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +13,9 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.xrci.standup.utility.ComplianceModel;
 import com.xrci.standup.utility.DayDetails;
+import com.xrci.standup.utility.GetData;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -24,7 +29,9 @@ public class WeeklyFragment extends Fragment {
     private ListView mListView;
     public static final String intentFromWeekly = "intentFromWeekly";
     public static final String intentFromWeeklySteps = "weeklyIntentSteps";
+    public static final String intentFromWeeklyCompliance = "weeklyIntentCompliance";
 
+    WeeklyAdapter weeklyAdapter;
     public WeeklyFragment() {
     }
 
@@ -34,19 +41,21 @@ public class WeeklyFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_weekly, container, false);
         mListView = (ListView) rootView.findViewById(R.id.listview_weekly);
         final ArrayList<DayDetails> days = findWeeklySteps();
-        WeeklyAdapter weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, findWeeklySteps());
-
+        weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, findWeeklySteps());
+        ComplianceSettingClass complianceSettingClass = new ComplianceSettingClass();
+        complianceSettingClass.execute();
         mListView.setAdapter(weeklyAdapter);
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
-                    Intent startMain = new Intent(getActivity().getApplicationContext(), MainActivity.class);
-                    startActivity(startMain);
+//                    Intent startMain = new Intent(getActivity().getApplicationContext(), MainActivity.class);
+//                    startActivity(startMain);
                 } else {
                     Intent intent = new Intent(getActivity().getApplicationContext(),
                             DayDetailActivity.class).putExtra(intentFromWeekly, position)
-                            .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken());
+                            .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken())
+                            .putExtra(intentFromWeeklyCompliance, days.get(position).getCompliance());
                     startActivity(intent);
                 }
 
@@ -61,6 +70,7 @@ public class WeeklyFragment extends Fragment {
         int validDays = 0;
         int weeklyCount = 0;
         int totalGoal = 0;
+        int totalCompliance = 0;
         for (int i = 1; i <= 7; i++) {
 
             Calendar cal = GregorianCalendar.getInstance();
@@ -79,6 +89,9 @@ public class WeeklyFragment extends Fragment {
                 validDays++;
             int dayGoal = dbHandler.getDayGoal(daysBeforeDate);
             day.setDayGoal(dayGoal);
+            int dayCompliance = dbHandler.getDayCompliance(daysBeforeDate);
+            day.setCompliance(dayCompliance);
+
 
             Log.i("check", "day goal is " + dayGoal);
             day.setDate(daysBeforeDate);
@@ -94,6 +107,7 @@ public class WeeklyFragment extends Fragment {
             if (day.getStepsTaken() != 0) {
                 weeklyCount += day.getStepsTaken();
                 totalGoal += dayGoal;
+                totalCompliance += dayCompliance;
             }
         }
         DayDetails dayAvg = new DayDetails();
@@ -101,6 +115,7 @@ public class WeeklyFragment extends Fragment {
         if (validDays != 0) {
             dayAvg.setStepsTaken(weeklyCount);
             dayAvg.setDayGoal(totalGoal);
+            dayAvg.setCompliance(totalCompliance/validDays);
             dayAvg.setStepsRemained(totalGoal - weeklyCount);
         }
         totalGoal = 0;
@@ -116,6 +131,61 @@ public class WeeklyFragment extends Fragment {
 
         return days;
     }
+
+    public class ComplianceSettingClass extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+//            sharedPreferences.getString("")
+            int userid = sharedPreferences.getInt("userId", 1);
+            ComplianceModel complianceModel = new ComplianceModel(Calendar.getInstance().getTime(), userid);
+            String complianceResponse = complianceModel.getWeekCompliance();
+            if(!complianceResponse.equals(GetData.EXCEPTION) && !complianceResponse.equals(GetData.INVALID_PAYLOAD) && !complianceModel.equals(GetData.INVALID_RESPONSE)) {
+                int[] weeklyComplianceArray = getIntArrayFromString(complianceResponse);
+                DatabaseHandler dbHandler = new DatabaseHandler(getActivity());
+                if (weeklyComplianceArray.length > 0) {
+                    dbHandler.clearCompliance();
+                }
+                for (int i = 7, j = 0; i > 0; i--, j++) {
+                    Calendar cal = GregorianCalendar.getInstance();
+                    cal.setTime(new Date());
+                    cal.add(Calendar.DAY_OF_YEAR, -i);
+                    Date daysBeforeDate = cal.getTime();
+                    dbHandler.setDayCompliance(daysBeforeDate, weeklyComplianceArray[j]);
+                    dbHandler.close();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            weeklyAdapter.clear();
+            ArrayList<DayDetails> dayDetailses = findWeeklySteps();
+            int i = 0;
+            for (DayDetails dayDetails : dayDetailses) {
+                weeklyAdapter.insert(dayDetails, i);
+                i++;
+            }
+            weeklyAdapter.notifyDataSetChanged();
+        }
+
+        public int[] getIntArrayFromString(String arr){
+            String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
+
+            int[] results = new int[items.length];
+
+            for (int i = 0; i < items.length; i++) {
+                try {
+                    results[i] = Integer.parseInt(items[i]);
+                } catch (NumberFormatException nfe) {};
+            }
+            return  results;
+        }
+    }
+
 
 
 }

@@ -26,12 +26,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 8;
+    private final static int DB_VERSION = 9;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
     private static final String TABLE_NOTIFICATION_ACTIVITY_LOG = "tbl_notification_log";
     private static final String TABLE_GOAL_LOG = "tbl_goal_log";
+    private static final String TABLE_COMPLIANCE_LOG = "tbl_compliance_log";
     private static final String TABLE_NOTIFACTION_RECORD = "tbl_notification_record";
     private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
 
@@ -50,6 +51,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String SYNCED = "synced";
     private static final String KEY_DAY_DATE = "dayDate";
     private static final String KEY_GOAL = "goal";
+    private static final String KEY_COMPLIANCE = "compliance";
     private static final String KEY_NOTIFICATION_MESSAGE = "notification_message";
     private static final String KEY_NOTIFICATION_TIME = "notification_time";
 
@@ -71,6 +73,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     String CREATE_FUSED_LOG_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_FUSED_ACTIVITY_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY," + KEY_ACTIVITY + " INTEGER,"
             + KEY_START + " TEXT," + KEY_END + " TEXT," + NO_OF_STEPS + " INTEGER," + TIME_PERIOD + " INTEGER," + SYNCED + " INTEGER, " + KEY_TIMESTAMP + " TEXT," + DISCARDED + " INTEGER )";
+
+
+    private static String CREATE_COMPLIANCE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_COMPLIANCE_LOG + "("
+            + ROWID + " INTEGER PRIMARY KEY,"
+            + KEY_DAY_DATE + " TEXT," + KEY_COMPLIANCE + " INTEGER)";
 
     //Context cont;
 
@@ -101,6 +108,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
 
             db.execSQL(CREATE_FUSED_LOG_TABLE);
+
+            db.execSQL(CREATE_COMPLIANCE_TABLE);
             //db.close();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -127,6 +136,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL(CREATE_FUSED_LOG_TABLE);
         db.execSQL(CREATE_GOAL_TABLE);
         db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
+        db.execSQL(CREATE_COMPLIANCE_TABLE);
 
 
     }
@@ -205,7 +215,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         cursor.moveToFirst();
         Log.i("check", "count before is  for fusion" + cursor.getInt(0));
         cursor.close();
-        db.rawQuery("DELETE FROM "  + TABLE_FUSED_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs).moveToFirst();
+        db.rawQuery("DELETE FROM " + TABLE_FUSED_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs).moveToFirst();
         Cursor cursor2 = db.rawQuery("SELECT COUNT (*) FROM " + TABLE_ACTIVITY_LOG, null);
         cursor2.moveToFirst();
         Log.i("check", "count after is  for fusion" + cursor2.getInt(0));
@@ -213,7 +223,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
         db.close();
     }
-
 
 
     public void setDayGoal(Date dayDate, int goal) {
@@ -226,6 +235,73 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         System.out.println("Row inserted for goal: " + rowinserted);
         db.close();
     }
+
+    public int getDayGoal(Date date) {
+        int dayGoal;
+        //Make sure that date format and column format is consistent
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = simpleDateFormat.format(date);
+        String fetchDateOnly = dateString.substring(0, 10);
+        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT " + KEY_GOAL + " FROM " + TABLE_GOAL_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
+//        db.close();
+        if (cursor.moveToFirst()) {
+            Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
+            dayGoal = cursor.getInt(0);
+        } else
+            dayGoal = 6000;
+
+        cursor.close();
+        db.close();
+        return dayGoal;
+    }
+
+    public void setDayCompliance(Date dayDate, int compliance) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_DAY_DATE, sf.format(dayDate));
+        values.put(KEY_COMPLIANCE, compliance);
+        long rowinserted = db.insert(TABLE_COMPLIANCE_LOG, null, values);
+        System.out.println("Row inserted for goal: " + rowinserted);
+        db.close();
+    }
+
+    public int getDayCompliance(Date date) {
+        int compliance;
+        //Make sure that date format and column format is consistent
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateString = simpleDateFormat.format(date);
+        String fetchDateOnly = dateString.substring(0, 10);
+        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        Cursor cursor = db.rawQuery("SELECT " + KEY_COMPLIANCE + " FROM " + TABLE_COMPLIANCE_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
+//        db.close();
+        if (cursor.moveToFirst()) {
+            Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
+            compliance = cursor.getInt(0);
+        } else
+            compliance = 0;
+
+        cursor.close();
+        db.close();
+        return compliance;
+    }
+
+    public void clearCompliance() {
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        String dateString = simpleDateFormat.format(date);
+//        String fetchDateOnly = dateString.substring(0, 10);
+//        Log.i("cursor_db", fetchDateOnly);
+        SQLiteDatabase db = this.getReadableDatabase();
+//        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        db.rawQuery("DELETE FROM " + TABLE_COMPLIANCE_LOG, null).moveToFirst();
+        db.close();
+    }
+
 
     public void setTableNotificationActivityRecords(String message, int activity, Date date) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -718,7 +794,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
 
-
     public int getDayDataFromActivityLog(Date date) {
         int stepCount;
         //Make sure that date format and column format is consistent
@@ -741,27 +816,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return stepCount;
     }
 
-    public int getDayGoal(Date date) {
-        int dayGoal;
-        //Make sure that date format and column format is consistent
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateString = simpleDateFormat.format(date);
-        String fetchDateOnly = dateString.substring(0, 10);
-        Log.i("cursor_db", fetchDateOnly);
-        SQLiteDatabase db = this.getReadableDatabase();
-        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
-        Cursor cursor = db.rawQuery("SELECT " + KEY_GOAL + " FROM " + TABLE_GOAL_LOG + " WHERE " + KEY_DAY_DATE + " LIKE  ?", selectionArgs);
-//        db.close();
-        if (cursor.moveToFirst()) {
-            Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
-            dayGoal = cursor.getInt(0);
-        } else
-            dayGoal = 6000;
-
-        cursor.close();
-        db.close();
-        return dayGoal;
-    }
 
     public ArrayList<NotificationModel> getDayNotification(Date date) {
         //Make sure that date format and column format is consistent
@@ -784,7 +838,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             notificationModels.add(notificationModel);
             while (cursor.moveToNext()) {
                 NotificationModel notificationModel1 = new NotificationModel(cursor.getString(0),
-                     Integer.parseInt(cursor.getString(1)), cursor.getString(2));
+                        Integer.parseInt(cursor.getString(1)), cursor.getString(2));
                 notificationModels.add(notificationModel1);
             }
         }
