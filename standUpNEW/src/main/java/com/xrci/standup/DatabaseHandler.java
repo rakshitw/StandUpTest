@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.xrci.standup.utility.NotificationModel;
+import com.xrci.standup.utility.PostActivityDetailsModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,7 +27,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 9;
+    private final static int DB_VERSION = 10;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
@@ -35,6 +36,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String TABLE_COMPLIANCE_LOG = "tbl_compliance_log";
     private static final String TABLE_NOTIFACTION_RECORD = "tbl_notification_record";
     private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
+    private static final String TABLE_PENDING_SERVER_LOG = "tbl_pending_server_log";
 
     //SAMPLER table name
 
@@ -77,7 +79,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     private static String CREATE_COMPLIANCE_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_COMPLIANCE_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY,"
-            + KEY_DAY_DATE + " TEXT," + KEY_COMPLIANCE + " INTEGER)";
+    + KEY_DAY_DATE + " TEXT," + KEY_COMPLIANCE + " INTEGER)";
+
+
+
+    String CREATE_PENDING_SERVER_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_PENDING_SERVER_LOG + "("
+            + ROWID + " INTEGER PRIMARY KEY," + KEY_ACTIVITY + " INTEGER,"
+            + KEY_START + " TEXT," + KEY_END + " TEXT," + NO_OF_STEPS + " INTEGER )";
+
 
     //Context cont;
 
@@ -105,6 +114,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
             db.execSQL(CREATE_GOAL_TABLE);
             db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
+            db.execSQL(CREATE_PENDING_SERVER_TABLE);
 
 
             db.execSQL(CREATE_FUSED_LOG_TABLE);
@@ -137,6 +147,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL(CREATE_GOAL_TABLE);
         db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
         db.execSQL(CREATE_COMPLIANCE_TABLE);
+        db.execSQL(CREATE_PENDING_SERVER_TABLE);
 
 
     }
@@ -204,6 +215,62 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addPendingServerActivity(Date activityStartTime, Date activityEndTime,int typeId,int steps) {
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_ACTIVITY, typeId);
+        values.put(KEY_START, sf.format(activityStartTime));
+        values.put(KEY_END, sf.format(activityEndTime));
+        values.put(NO_OF_STEPS, steps);
+        long rowinserted = db.insert(TABLE_PENDING_SERVER_LOG, null, values);
+        Log.i("check", "addPendingServerActivity row inserted:" + rowinserted);
+        db.close();
+    }
+
+    public void clearPendingServerLog(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        db.rawQuery("DELETE FROM " + TABLE_PENDING_SERVER_LOG, null).moveToFirst();
+        db.close();
+    }
+
+    public ArrayList<PostActivityDetailsModel> getPostActivityModelFromServerLog(int userId){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getReadableDatabase();
+//         KEY_ACTIVITY + " INTEGER,"
+//        + KEY_START + " TEXT," + KEY_END + " TEXT," + NO_OF_STEPS + " INTEGER
+        String[] columns = {KEY_ACTIVITY, KEY_START, KEY_END, NO_OF_STEPS };
+
+        Cursor cursor = db.query(TABLE_PENDING_SERVER_LOG, columns, null,null,null, null, null);
+        Log.i("check", "querying cursor size " +  cursor.getCount() );
+
+
+        ArrayList<PostActivityDetailsModel> postActivityDetailsModels = new ArrayList<PostActivityDetailsModel>();
+        int activityTypeIndex = cursor.getColumnIndex(KEY_ACTIVITY);
+        int startTimeIndex = cursor.getColumnIndex(KEY_START);
+        int endTimeIndex = cursor.getColumnIndex(KEY_END);
+        int stepsIndex = cursor.getColumnIndex(NO_OF_STEPS);
+
+        while (cursor.moveToNext()) {
+            try {
+                int activityType = cursor.getInt(activityTypeIndex);
+                Date startTime = simpleDateFormat.parse(cursor.getString(startTimeIndex));
+                Date endTime = simpleDateFormat.parse(cursor.getString(endTimeIndex));
+                int steps = cursor.getInt(stepsIndex);
+                Log.i("check", "adding query  " + startTime );
+                PostActivityDetailsModel postActivityDetailsModel = new PostActivityDetailsModel(startTime, endTime, 1, userId, activityType, steps );
+                postActivityDetailsModels.add(postActivityDetailsModel);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        }
+        cursor.close();
+        db.close();
+        return postActivityDetailsModels;
+    }
+
     public void clearFusedUserActivity(Date date) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateString = simpleDateFormat.format(date);
@@ -211,15 +278,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         Log.i("cursor_db", fetchDateOnly);
         SQLiteDatabase db = this.getWritableDatabase();
         String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
-        Cursor cursor = db.rawQuery("SELECT COUNT (*) FROM " + TABLE_ACTIVITY_LOG, null);
-        cursor.moveToFirst();
-        Log.i("check", "count before is  for fusion" + cursor.getInt(0));
-        cursor.close();
         db.rawQuery("DELETE FROM " + TABLE_FUSED_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs).moveToFirst();
-        Cursor cursor2 = db.rawQuery("SELECT COUNT (*) FROM " + TABLE_ACTIVITY_LOG, null);
-        cursor2.moveToFirst();
-        Log.i("check", "count after is  for fusion" + cursor2.getInt(0));
-        cursor2.close();
+
+
 
         db.close();
     }
@@ -770,26 +831,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         date.setMinutes(0);
         date.setSeconds(0);
         String startTime = sf.format(date);
-
         ArrayList<ActivityDetails> userActivities = new ArrayList<ActivityDetails>();
         SQLiteDatabase db = this.getReadableDatabase();
-        //Cursor logCursor=db.rawQuery("Select activity,sum(timeperiod) from tbl_activity_log where end  between \""+startTime+"\" and \""+endTime+"\" group by activity",null );
-        Cursor cursor = db.rawQuery("SELECT COUNT (*) FROM tbl_activity_log", null);
-        cursor.moveToFirst();
-        Log.i("check", "count before is  for main" + cursor.getInt(0));
-        cursor.close();
         String deleteQuery = "delete from tbl_activity_log where end  between \"" + startTime + "\" and \"" + endTime + "\"";
         Log.i("check", "delete query is " + deleteQuery);
-
         db.rawQuery(deleteQuery, null).moveToFirst();
-
-        Cursor cursor2 = db.rawQuery("SELECT COUNT (*) FROM tbl_activity_log", null);
-        cursor2.moveToFirst();
-        Log.i("check", "count after is  for main" + cursor2.getInt(0));
-        cursor2.close();
-
-//        Log.i("check", "deletion done" + logCursor.getCount());
-//        logCursor.close();
         db.close();
     }
 

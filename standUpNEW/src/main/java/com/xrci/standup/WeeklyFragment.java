@@ -1,6 +1,7 @@
 package com.xrci.standup;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -30,7 +31,6 @@ public class WeeklyFragment extends Fragment {
     public static final String intentFromWeekly = "intentFromWeekly";
     public static final String intentFromWeeklySteps = "weeklyIntentSteps";
     public static final String intentFromWeeklyCompliance = "weeklyIntentCompliance";
-
     WeeklyAdapter weeklyAdapter;
     public WeeklyFragment() {
     }
@@ -39,11 +39,11 @@ public class WeeklyFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_weekly, container, false);
+//        context = getActivity().getApplicationContext();
         mListView = (ListView) rootView.findViewById(R.id.listview_weekly);
-        final ArrayList<DayDetails> days = findWeeklySteps();
-        weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, findWeeklySteps());
-        ComplianceSettingClass complianceSettingClass = new ComplianceSettingClass();
-        complianceSettingClass.execute();
+        final ArrayList<DayDetails> days = findWeeklySteps(getActivity().getApplicationContext());
+        weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, days);
+
         mListView.setAdapter(weeklyAdapter);
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -61,11 +61,20 @@ public class WeeklyFragment extends Fragment {
 
             }
         });
+
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+
+        int userid = sharedPreferences.getInt("userId", 0);
+
+        ComplianceSettingClass complianceSettingClass = new ComplianceSettingClass(getActivity().getApplicationContext());
+        complianceSettingClass.execute(userid);
+
         return rootView;
 
     }
 
-    public ArrayList<DayDetails> findWeeklySteps() {
+    public ArrayList<DayDetails> findWeeklySteps(Context context) {
         ArrayList<DayDetails> days = new ArrayList<DayDetails>();
         int validDays = 0;
         int weeklyCount = 0;
@@ -79,7 +88,7 @@ public class WeeklyFragment extends Fragment {
             Date daysBeforeDate = cal.getTime();
 
             DayDetails day = new DayDetails();
-            DatabaseHandler dbHandler = new DatabaseHandler(getActivity());
+            DatabaseHandler dbHandler = new DatabaseHandler(context);
             int stepCount = dbHandler.getDayDataFromActivityLog(daysBeforeDate);
 //            Log.i("cursor_log", "table count is " + Integer.toString(cursor.getCount()));
 
@@ -115,7 +124,7 @@ public class WeeklyFragment extends Fragment {
         if (validDays != 0) {
             dayAvg.setStepsTaken(weeklyCount);
             dayAvg.setDayGoal(totalGoal);
-            dayAvg.setCompliance(totalCompliance/validDays);
+            dayAvg.setCompliance(totalCompliance / validDays);
             dayAvg.setStepsRemained(totalGoal - weeklyCount);
         }
         totalGoal = 0;
@@ -132,17 +141,29 @@ public class WeeklyFragment extends Fragment {
         return days;
     }
 
-    public class ComplianceSettingClass extends AsyncTask<Void, Void, Void> {
+    public class ComplianceSettingClass extends AsyncTask<Integer, Void, String> {
+        Context context;
+        public ComplianceSettingClass(Context context) {
+            this.context = context;
+        }
         @Override
-        protected Void doInBackground(Void... params) {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-//            sharedPreferences.getString("")
-            int userid = sharedPreferences.getInt("userId", 1);
-            ComplianceModel complianceModel = new ComplianceModel(Calendar.getInstance().getTime(), userid);
+        protected String doInBackground(Integer... userid) {
+            Log.i("check", "Weekly fragment userid is" +  userid[0]);
+            ComplianceModel complianceModel = new ComplianceModel(Calendar.getInstance().getTime(), userid[0]);
             String complianceResponse = complianceModel.getWeekCompliance();
-            if(!complianceResponse.equals(GetData.EXCEPTION) && !complianceResponse.equals(GetData.INVALID_PAYLOAD) && !complianceModel.equals(GetData.INVALID_RESPONSE)) {
+
+
+            return complianceResponse;
+        }
+
+
+        @Override
+        protected void onPostExecute(String complianceResponse) {
+            super.onPostExecute(complianceResponse);
+            DatabaseHandler dbHandler = new DatabaseHandler(context);
+
+            if (!complianceResponse.equals(GetData.EXCEPTION) && !complianceResponse.equals(GetData.INVALID_PAYLOAD) && !complianceResponse.equals(GetData.INVALID_RESPONSE)) {
                 int[] weeklyComplianceArray = getIntArrayFromString(complianceResponse);
-                DatabaseHandler dbHandler = new DatabaseHandler(getActivity());
                 if (weeklyComplianceArray.length > 0) {
                     dbHandler.clearCompliance();
                 }
@@ -155,15 +176,8 @@ public class WeeklyFragment extends Fragment {
                     dbHandler.close();
                 }
             }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
             weeklyAdapter.clear();
-            ArrayList<DayDetails> dayDetailses = findWeeklySteps();
+            ArrayList<DayDetails> dayDetailses = findWeeklySteps(context);
             int i = 0;
             for (DayDetails dayDetails : dayDetailses) {
                 weeklyAdapter.insert(dayDetails, i);
@@ -172,7 +186,7 @@ public class WeeklyFragment extends Fragment {
             weeklyAdapter.notifyDataSetChanged();
         }
 
-        public int[] getIntArrayFromString(String arr){
+        public int[] getIntArrayFromString(String arr) {
             String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").split(",");
 
             int[] results = new int[items.length];
@@ -180,12 +194,13 @@ public class WeeklyFragment extends Fragment {
             for (int i = 0; i < items.length; i++) {
                 try {
                     results[i] = Integer.parseInt(items[i]);
-                } catch (NumberFormatException nfe) {};
+                } catch (NumberFormatException nfe) {
+                }
+                ;
             }
-            return  results;
+            return results;
         }
     }
-
 
 
 }

@@ -44,6 +44,7 @@ import com.xrci.standup.utility.PostNotificationModel;
 import org.json.JSONArray;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -112,7 +113,7 @@ public class StepService extends Service implements SensorEventListener {
     private DatabaseHandler dbHandler;
     private static final String GOALSETDAY = "goalsetday";
     private boolean isUserValidated = false;
-    private JSONArray entityArray;
+//    private JSONArray entityArray;
     private JSONArray notificationArray;
     private int userId;
     private Date lastNotificationTime = Calendar.getInstance().getTime();
@@ -120,7 +121,7 @@ public class StepService extends Service implements SensorEventListener {
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
-    private long fuseTimeGap = 1 * 60 * 1000;
+    private long fuseTimeGap = 8 * 60 * 1000;
 //    private long noNotificationRange =
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -272,7 +273,7 @@ public class StepService extends Service implements SensorEventListener {
 
 
         //initialize entityArray and notification array
-        entityArray = new JSONArray();
+//        entityArray = new JSONArray();
         notificationArray = new JSONArray();
 
 //        Log.i(TAG, "is user validated " + isUserValidated );
@@ -461,7 +462,15 @@ public class StepService extends Service implements SensorEventListener {
 
 
                 }
-                updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
+
+                if (curr_time.getTime() - lastFusedTime.getTime() > fuseTimeGap) {
+                    Log.i(TAG, "doing fusion in unknown");
+                    updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
+                            - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), true);
+
+                    lastFusedTime = curr_time;
+                } else
+                    updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
                         - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
 
             }
@@ -482,7 +491,7 @@ public class StepService extends Service implements SensorEventListener {
             if (unknownStartTime.getTime() >= stillEndTime.getTime() && unknownStartTime.getTime() >= end_time.getTime() && (unknownEndTime.getTime() > unknownStartTime.getTime())) {
 
                 //Send to server too
-                sendActivityDetailToServer(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, 0);
+                sendActivityDetailToServerFromDB(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, 0);
 
                 Log.i(TAG, "end time for unknown is " + unknownEndTime);
             }
@@ -499,7 +508,7 @@ public class StepService extends Service implements SensorEventListener {
             if (stillStartTime.getTime() >= unknownEndTime.getTime() && stillStartTime.getTime() >= end_time.getTime() && stillEndTime.getTime() > stillStartTime.getTime()) {
 
                 //Send to server too
-                sendActivityDetailToServer(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
+                sendActivityDetailToServerFromDB(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
                 Log.i(TAG, "end time for still is " + stillEndTime);
             }
 //            }
@@ -516,7 +525,7 @@ public class StepService extends Service implements SensorEventListener {
             if (stillEndTime.getTime() > stillStartTime.getTime() && stillStartTime.getTime() >= unknownEndTime.getTime() && stillStartTime.getTime() >= end_time.getTime()) {
 
                 //Send to server too
-                sendActivityDetailToServer(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
+                sendActivityDetailToServerFromDB(stillStartTime, stillEndTime, DetectedActivity.STILL, 0);
                 Log.i(TAG, "end time for still is " + stillEndTime);
 //            }
             }
@@ -551,7 +560,7 @@ public class StepService extends Service implements SensorEventListener {
                 updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime, 0, true, false, 0, true, getTotalStepsToday(0), false);
                 if (unknownEndTime.getTime() > unknownStartTime.getTime() && unknownStartTime.getTime() >= stillEndTime.getTime() && unknownStartTime.getTime() >= end_time.getTime()) {
                     //Send to server too
-                    sendActivityDetailToServer(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, 0);
+                    sendActivityDetailToServerFromDB(unknownStartTime, unknownEndTime, DetectedActivity.UNKNOWN, 0);
 
 //                }
 
@@ -585,7 +594,7 @@ public class StepService extends Service implements SensorEventListener {
             if (end_time.getTime() > start_time.getTime() && start_time.getTime() >= unknownEndTime.getTime() && start_time.getTime() >= stillEndTime.getTime()) {
 
                 //Send to server too
-                sendActivityDetailToServer(start_time, end_time, DetectedActivity.ON_FOOT, delta_value);
+                sendActivityDetailToServerFromDB(start_time, end_time, DetectedActivity.ON_FOOT, delta_value);
             }
             setTotalStepsToday(delta_value);
 
@@ -994,40 +1003,80 @@ public class StepService extends Service implements SensorEventListener {
      *                          and updates entity Array accordingly
      */
 
-    private void sendActivityDetailToServer(Date activityStartTime, Date activityEndTime, int typeId, int steps) {
+//    private void sendActivityDetailToServer(Date activityStartTime, Date activityEndTime, int typeId, int steps) {
+//        //TODO change this format at server
+//        Log.i(TAG, "entity length before send  " + entityArray.length());
+////        Toast.makeText(,"entity length before send is "
+////                + entityArray.length(),Toast.LENGTH_SHORT).show();
+//        //TODO remove the below type id assignment
+//        userId = getUserId();
+//        Log.i(TAG, "userId is " + userId);
+//        PostActivityDetailsModel postActivityDetailsModel = new PostActivityDetailsModel(
+//                activityStartTime, activityEndTime, 1, userId, typeId, steps);
+//
+//        postActivityDetailsModel.getPostActivityJSON(entityArray);
+////        Toast.makeText(getApplicationContext(),"entity length inside send is "
+////                + entityArray.length(),Toast.LENGTH_SHORT).show();
+//        Log.i(TAG, "length inside send " + entityArray.length());
+//        String activityPayload = entityArray.toString();
+//        Log.i(TAG, "post activity payload is " + activityPayload);
+//        String result = PostData.postContent(PostActivityDetailsModel.postActivityDetailURI, activityPayload);
+//        Log.i(TAG, "postActivity result is " + result);
+//        if (result.equals(PostData.INVALID_PAYLOAD)) {
+//            //TODO: get more than just error from server, discarding array for now
+//            entityArray = new JSONArray();
+//
+//        } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
+//            //Do nothing
+//        } else {
+//            Log.i(TAG, "sent activity result is " + result);
+//            entityArray = new JSONArray();
+//        }
+//        Log.i(TAG, "entity length after send is " + entityArray.length());
+////        Toast.makeText(getApplicationContext(),"entity length after send is "
+////                + entityArray.length(),Toast.LENGTH_SHORT).show();
+//
+//    }
+
+    private void sendActivityDetailToServerFromDB(Date activityStartTime, Date activityEndTime, int typeId, int steps) {
         //TODO change this format at server
-        Log.i(TAG, "entity length before send  " + entityArray.length());
+//        Log.i(TAG, "entity length before send  " + entityArray.length());
 //        Toast.makeText(,"entity length before send is "
 //                + entityArray.length(),Toast.LENGTH_SHORT).show();
         //TODO remove the below type id assignment
         userId = getUserId();
-        Log.i(TAG, "userId is " + userId);
-        PostActivityDetailsModel postActivityDetailsModel = new PostActivityDetailsModel(
-                activityStartTime, activityEndTime, 1, userId, typeId, steps);
+        Log.i(TAG, " sendActivityDetailToServerFromDB userId is " + userId);
 
-        postActivityDetailsModel.getPostActivityJSON(entityArray);
-//        Toast.makeText(getApplicationContext(),"entity length inside send is "
-//                + entityArray.length(),Toast.LENGTH_SHORT).show();
-        Log.i(TAG, "length inside send " + entityArray.length());
-        String activityPayload = entityArray.toString();
-        Log.i(TAG, "post activity payload is " + activityPayload);
-        String result = PostData.postContent(PostActivityDetailsModel.postActivityDetailURI, activityPayload);
-        Log.i(TAG, "postActivity result is " + result);
-        if (result.equals(PostData.INVALID_PAYLOAD)) {
-            //TODO: get more than just error from server, discarding array for now
-            entityArray = new JSONArray();
+        dbHandler.addPendingServerActivity(activityStartTime, activityEndTime, typeId, steps);
+        ArrayList<PostActivityDetailsModel> postActivityDetailsModels =  dbHandler.getPostActivityModelFromServerLog(userId);
 
-        } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
-            //Do nothing
-        } else {
-            Log.i(TAG, "sent activity result is " + result);
-            entityArray = new JSONArray();
+        Log.i(TAG, "arraylist size is " + postActivityDetailsModels.size());
+        JSONArray sendActivityArray = new JSONArray();
+        for (PostActivityDetailsModel postActivityDetailsModel : postActivityDetailsModels) {
+            postActivityDetailsModel.getPostActivityJSON(sendActivityArray);
         }
-        Log.i(TAG, "entity length after send is " + entityArray.length());
-//        Toast.makeText(getApplicationContext(),"entity length after send is "
-//                + entityArray.length(),Toast.LENGTH_SHORT).show();
+//
+////        Toast.makeText(getApplicationContext(),"entity length inside send is "
+////                + entityArray.length(),Toast.LENGTH_SHORT).show();
+//        Log.i(TAG, " sendActivityDetailToServerFromDB length inside send " + sendActivityArray.length());
+        String activityPayload = sendActivityArray.toString();
+//        Log.i(TAG, "sendActivityDetailToServerFromDB  post activity payload is " + activityPayload);
+        String result = PostData.postContent(PostActivityDetailsModel.postActivityDetailURI, activityPayload);
+//        Log.i(TAG, "sendActivityDetailToServerFromDB postActivity result is " + result);
+        if (result.equals(PostData.INVALID_PAYLOAD)) {
+//            //TODO: get more than just error from server, discarding array for now
+            dbHandler.clearPendingServerLog();
+////            entityArray = new JSONArray();
+//
+        } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
+//            //Do nothing
+        } else {
+//            Log.i(TAG, "sendActivityDetailToServerFromDB ent activity result is " + result);
+            dbHandler.clearPendingServerLog();
+        }
 
     }
+
 
     private void sendNotificationToServer(Date notificationTime, String message, int typeId, int steps) {
         //TODO change this format at server
