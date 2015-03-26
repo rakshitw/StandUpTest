@@ -7,7 +7,7 @@
     <string name="app_id">353322188187676</string>
     <string name="drawer_open">Open drawer</string>
     <string name="drawer_close">Close drawer</string>
-    <string name="title_activity_weekly">Week Statistics</string>
+    <string name="title_activity_weekly">Week Performance</string>
     <string name="action_week">Week Log</string>
     <string name="title_activity_day_detail">Detailed Activity</string>
     <string name="title_activity_notification_log">Daily Notification</string>

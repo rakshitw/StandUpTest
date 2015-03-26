@@ -25,6 +25,7 @@ public class AuthenticationModel {
     public static final String parameterAge = "age";
     public static final String parameterSex = "sex";
     public static final String parameterWeight = "weight";
+    public static final String parameterHeight = "height";
 
 
     private String valueUserName;
@@ -37,6 +38,7 @@ public class AuthenticationModel {
     private String valueOrganization;
     private String valueAge;
     private String valueWeight;
+    private String valueHeight;
 
 
     static final public String authenticationUri = "http://64.49.234.131:8080/standup/rest/user/authenticate";
@@ -61,7 +63,7 @@ public class AuthenticationModel {
      */
     public AuthenticationModel(String valueUserName, String valueEmail
             , String valueAuthType, String valueAuthID, Date valueSignUpDate
-            , String valueSex, String valueOrganization, String valueAge, String valueWeight) {
+            , String valueSex, String valueOrganization, String valueAge, String valueWeight, String valueHeight) {
         this.valueUserName = valueUserName;
         this.valueEmail = valueEmail;
         this.valueAuthType = valueAuthType;
@@ -71,7 +73,7 @@ public class AuthenticationModel {
         this.valueOrganization = valueOrganization;
         this.valueAge = valueAge;
         this.valueWeight = valueWeight;
-
+        this.valueHeight = valueHeight;
     }
 
     public String verifyAuthentication() {
@@ -88,6 +90,7 @@ public class AuthenticationModel {
             SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm");
             authenticateObject.put(parameterSignUpdate, sf.format(valueSignUpDate));
             authenticateObject.put(parameterWeight, Integer.parseInt(valueWeight));
+            authenticateObject.put(parameterHeight, Integer.parseInt(valueHeight));
         } catch (JSONException e) {
             Log.i(TAG, "JSON Exception");
         }

@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 
 // Teime period now not kept calculated in the DB, calculated at the runtime.
@@ -34,7 +35,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String TABLE_NOTIFICATION_ACTIVITY_LOG = "tbl_notification_log";
     private static final String TABLE_GOAL_LOG = "tbl_goal_log";
     private static final String TABLE_COMPLIANCE_LOG = "tbl_compliance_log";
-    private static final String TABLE_NOTIFACTION_RECORD = "tbl_notification_record";
+    private static final String TABLE_NOTIFICATION_RECORD = "tbl_notification_record";
     private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
     private static final String TABLE_PENDING_SERVER_LOG = "tbl_pending_server_log";
 
@@ -65,7 +66,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static String CREATE_GOAL_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_GOAL_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY,"
             + KEY_DAY_DATE + " TEXT," + KEY_GOAL + " INTEGER)";
-    private static String CREATE_NOTIFICATION_RECORD_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NOTIFACTION_RECORD + "("
+    private static String CREATE_NOTIFICATION_RECORD_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NOTIFICATION_RECORD + "("
             + ROWID + " INTEGER PRIMARY KEY,"
             + KEY_NOTIFICATION_MESSAGE + " TEXT,"
             + KEY_ACTIVITY + " INTEGER,"
@@ -371,7 +372,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_NOTIFICATION_MESSAGE, message);
         values.put(KEY_ACTIVITY, activity);
         values.put(KEY_NOTIFICATION_TIME, sf.format(date));
-        long rowinserted = db.insert(TABLE_NOTIFACTION_RECORD, null, values);
+        long rowinserted = db.insert(TABLE_NOTIFICATION_RECORD, null, values);
         System.out.println("Row inserted to notification: " + rowinserted);
         db.close();
     }
@@ -695,6 +696,33 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void flushTablesWeekOrMoreOlder(){
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.DAY_OF_YEAR, -9);
+        Date startDate = cal.getTime();
+
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        startDate.setHours(0);
+        startDate.setMinutes(0);
+        startDate.setSeconds(0);
+        String start_date = sf.format(startDate);
+
+        Calendar cal2 = GregorianCalendar.getInstance();
+        cal2.setTime(new Date());
+        cal2.add(Calendar.DAY_OF_YEAR, -100);
+        Date endDate = cal2.getTime();
+        String end_date = sf.format(endDate);
+        //Cursor logCursor=db.rawQuery("Select activity,start,end,noofsteps,timeperiod, from tbl_activity_log where end  between \""+startTime+"\" and \""+endTime+"\"",null );
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        db.rawQuery("DELETE FROM tbl_activity_log WHERE end between \"" + end_date + "\" and \"" + start_date + "\"" , null).moveToFirst();
+        db.rawQuery("DELETE FROM tbl_fused_activity_log WHERE end between \"" + end_date + "\" and \"" + start_date + "\"" , null).moveToFirst();
+        db.rawQuery("DELETE FROM " +  TABLE_COMPLIANCE_LOG + " WHERE " + KEY_DAY_DATE + " between \"" + end_date + "\" and \"" + start_date + "\"" , null).moveToFirst();
+        db.rawQuery("DELETE FROM " +  TABLE_NOTIFICATION_RECORD + " WHERE " + KEY_NOTIFICATION_TIME + " between \"" + end_date + "\" and \"" + start_date + "\"" , null).moveToFirst();
+        db.close();
+    }
+
     public long[] getTimeOfEachActivityToday(Date date) {
 
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -873,7 +901,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
         Cursor cursor = db.rawQuery("SELECT " + KEY_NOTIFICATION_MESSAGE + ", " + KEY_ACTIVITY + ", " + KEY_NOTIFICATION_TIME + "  FROM "
-                + TABLE_NOTIFACTION_RECORD + " WHERE " + KEY_NOTIFICATION_TIME + " LIKE  ?", selectionArgs);
+                + TABLE_NOTIFICATION_RECORD + " WHERE " + KEY_NOTIFICATION_TIME + " LIKE  ?", selectionArgs);
 //        db.close();
         ArrayList<NotificationModel> notificationModels = new ArrayList<NotificationModel>();
         Log.i("check", "cursor length is " + cursor.getCount());

@@ -122,8 +122,8 @@ public class WeeklyFragment extends Fragment {
         DayDetails dayAvg = new DayDetails();
 
         if (validDays != 0) {
-            dayAvg.setStepsTaken(weeklyCount);
-            dayAvg.setDayGoal(totalGoal);
+            dayAvg.setStepsTaken(weeklyCount/validDays);
+            dayAvg.setDayGoal(totalGoal/validDays);
             dayAvg.setCompliance(totalCompliance / validDays);
             dayAvg.setStepsRemained(totalGoal - weeklyCount);
         }
@@ -151,8 +151,8 @@ public class WeeklyFragment extends Fragment {
             Log.i("check", "Weekly fragment userid is" +  userid[0]);
             ComplianceModel complianceModel = new ComplianceModel(Calendar.getInstance().getTime(), userid[0]);
             String complianceResponse = complianceModel.getWeekCompliance();
-
-
+            DatabaseHandler dbHandler = new DatabaseHandler(context);
+            dbHandler.flushTablesWeekOrMoreOlder();
             return complianceResponse;
         }
 
@@ -161,7 +161,6 @@ public class WeeklyFragment extends Fragment {
         protected void onPostExecute(String complianceResponse) {
             super.onPostExecute(complianceResponse);
             DatabaseHandler dbHandler = new DatabaseHandler(context);
-
             if (!complianceResponse.equals(GetData.EXCEPTION) && !complianceResponse.equals(GetData.INVALID_PAYLOAD) && !complianceResponse.equals(GetData.INVALID_RESPONSE)) {
                 int[] weeklyComplianceArray = getIntArrayFromString(complianceResponse);
                 if (weeklyComplianceArray.length > 0) {

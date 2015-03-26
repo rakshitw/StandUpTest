@@ -294,7 +294,7 @@ public class StepService extends Service implements SensorEventListener {
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        showAlert("service started at " + Calendar.getInstance().getTime());
+//        showAlert("service started at " + Calendar.getInstance().getTime());
         //Set step goal
         setTodayGoal();
 //        Logger.appendLog("service started", true);
@@ -451,7 +451,7 @@ public class StepService extends Service implements SensorEventListener {
                     if ((curr_time.getTime() - stillStartTime.getTime()) > sittingNotificationTime
                             && (curr_time.getTime() - lastNotificationTime.getTime()) > minNotificationGapTime) {
                         long timePeriod = curr_time.getTime() - stillStartTime.getTime();
-                        String displayText = "Stand up! You have been " +
+                        String displayText = "StandUp! You have been " +
                                 "still for " + (int) timePeriod / 60000 + " minutes now";
                         lastNotificationTime = curr_time;
                         dbHandler.setTableNotificationActivityRecords(displayText, DetectedActivity.STILL, curr_time);
@@ -1282,7 +1282,7 @@ public class StepService extends Service implements SensorEventListener {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_launcher)
-                        .setContentTitle("Stand up and Move!!")
+                        .setContentTitle("StandUp and Move!!")
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(displayText))
                         .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)

@@ -4,13 +4,18 @@ import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class SettingsActivity extends Activity {
@@ -74,7 +79,28 @@ public class SettingsActivity extends Activity {
 
 
     public void saveSettings(View v) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String weight_orig = sharedPreferences.getString(BasicInformationForm.registrationWeight,"65");
+        int userId = sharedPreferences.getInt("userId", 0);
+        String weight_new = editTextWeight.getText().toString();
+//        {: 1,"weight": 80,"modificationDate" : "22-02-2015-23-55-22"}
+        if(!weight_new.equals(weight_orig)){
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("userId", userId);
+                jsonObject.put("weight", Integer.parseInt(weight_new));
+                SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+                String date = sf.format(Calendar.getInstance().getTime());
+                jsonObject.put("modificationDate", date );
+                String data = jsonObject.toString();
+                ChangeWeight  changeWeight = new ChangeWeight();
+                changeWeight.execute(data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
 
+        }
+        settingsUpdated = true;
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         Editor editor = preferences.edit();
         editor.putString(stopPingTimePeriodEnd, editTextEndTime.getText().toString());
@@ -101,14 +127,14 @@ public class SettingsActivity extends Activity {
 //        Log.i("check", "end time is " +  workplaceEndTimePicker.getCurrentHour() + ":" +  workplaceEndTimePicker.getCurrentMinute());
 
 //		editor.putBoolean("alertAtOffice",checkBoxOfficeTimeOnly.isChecked() );
-        editor.commit();
-        Toast.makeText(this, "Saved Successfully", Toast.LENGTH_LONG).show();
-        settingsUpdated = true;
 
+//
+
+
+        editor.commit();
 
         finish();
     }
-
 
     public void onEditTextStartClick(View v) {
         Calendar mcurrentTime = Calendar.getInstance();
@@ -152,6 +178,20 @@ public class SettingsActivity extends Activity {
         }, hour, minute, true);//Yes 24 hour time
         mTimePicker.setTitle("Select Time");
         mTimePicker.show();
+    }
+
+    public class ChangeWeight extends AsyncTask<String, Void, Void> {
+
+
+        @Override
+        protected Void doInBackground(String... params) {
+            String url = "http://64.49.234.131:8080/standup/rest/user/updateUserFeatures";
+            String response = PostData.postContent(url, params[0]);
+
+            Log.i("check", "response of weight update is " +  response + " request is " + params[0]);
+
+            return null;
+        }
     }
 
 

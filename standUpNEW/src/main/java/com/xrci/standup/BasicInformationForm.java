@@ -36,6 +36,7 @@ public class BasicInformationForm extends Activity {
 
     public static String registrationAge = "registrationAge";
     public static String registrationWeight = "registrationWeight";
+    public static String registrationHeight = "registrationHeight";
     public static String registrationEmail = "registrationEmail";
     public static String registrationOrganization = "registrationOrganization";
     public static String registrationSex = "registrationSex";
@@ -75,6 +76,8 @@ public class BasicInformationForm extends Activity {
         EditText emailEt = (EditText) findViewById(R.id.emailText);
         EditText ageEt = (EditText) findViewById(R.id.ageText);
         EditText weightEt = (EditText) findViewById(R.id.textWeight);
+        EditText heightEt = (EditText) findViewById(R.id.textHeight);
+
         RadioButton sexRbMale = (RadioButton) findViewById(R.id.radioMale);
         RadioButton sexRbFemale = (RadioButton) findViewById(R.id.radioFemale);
 
@@ -83,13 +86,15 @@ public class BasicInformationForm extends Activity {
         String organizationString = organizationList.getSelectedItem().toString();
         String ageString = ageEt.getText().toString();
         String weightString = weightEt.getText().toString();
+        String heightString = heightEt.getText().toString();
+
         String emailString = emailEt.getText().toString();
         pattern = Pattern.compile(EMAIL_PATTERN);
         String displayString;
 
 
         if (nameString.equals("") || organizationString.equals("")
-                || ageString.equals("") || weightString.equals("") || !validate(emailString)) {
+                || ageString.equals("") || weightString.equals("") || !validate(emailString) || heightString.equals("")) {
 
             // set dialog message
             //TODO email id is not validated.
@@ -136,6 +141,7 @@ public class BasicInformationForm extends Activity {
             editor.putString(registrationName, nameString);
             editor.putString(registrationAge, ageString);
             editor.putString(registrationWeight, weightString);
+            editor.putString(registrationHeight, heightString);
             editor.putString(registrationEmail, emailString);
             editor.putString(registrationOrganization, organizationString);
             if (sexRbFemale.isChecked())
@@ -150,7 +156,7 @@ public class BasicInformationForm extends Activity {
             String fbid = preferences.getString("fbid", "1");
             SharedPreferences.Editor editor_userId = preferences.edit();
             AuthenticationModel authModel = new AuthenticationModel(nameString
-                    , emailString, "facebook", fbid, Calendar.getInstance().getTime(), "M", organizationString, ageString, weightString);
+                    , emailString, "facebook", fbid, Calendar.getInstance().getTime(), "M", organizationString, ageString, weightString, heightString);
             String response = authModel.verifyAuthentication();
             Log.i("check", "authentication response is " + response);
 
@@ -297,6 +303,10 @@ public class BasicInformationForm extends Activity {
             ageEt.setText(sharedPreferences.getString(registrationAge, ""));
             EditText weightEt = (EditText) rootView.findViewById(R.id.textWeight);
             weightEt.setText(sharedPreferences.getString(registrationWeight, ""));
+
+            EditText heightEt = (EditText) rootView.findViewById(R.id.textHeight);
+            heightEt.setText(sharedPreferences.getString(registrationHeight, ""));
+
             RadioButton sexRbMale = (RadioButton) rootView.findViewById(R.id.radioMale);
             RadioButton sexRbFemale = (RadioButton) rootView.findViewById(R.id.radioFemale);
             if(sharedPreferences.getString(registrationSex, "") == "M") {

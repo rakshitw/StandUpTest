@@ -60,7 +60,7 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
             TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
 //            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
-            if (day.getStepsTaken() >= 10000){
+            if (day.getStepsTaken() >= 1000){
                 float displpaySteps =  round((float)day.getStepsTaken()/1000, 1);
                 dailyStatistics.setCenterText(displpaySteps + "K " + " steps");
             }else
