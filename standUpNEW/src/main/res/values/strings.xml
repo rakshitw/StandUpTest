@@ -14,6 +14,6 @@
     <string name="title_activity_basic_information_form">User Details</string>
     <string name="action_notification">Notifications</string>
     <string name="fuse_timeline">Show Fused Timeline</string>
-    <string name="title_activity_leader_board">Average Steps/Day Leaders</string>
+    <string name="title_activity_leader_board">Average Steps Leaders</string>
 
 </resources>

@@ -523,7 +523,8 @@ public class MainActivity extends Activity {
                         Log.i(TAG, "intent today steps " + todaySteps);
                     }
                     if (refreshFusedTimeLine) {
-                        UpdateTableForFusedTimelineForMain updateTableForFusedTimelineForMain = new UpdateTableForFusedTimelineForMain();
+                         Context passContext = getApplicationContext();
+                        UpdateTableForFusedTimelineForMain updateTableForFusedTimelineForMain = new UpdateTableForFusedTimelineForMain(context);
                         updateTableForFusedTimelineForMain.execute();
 
                     }
@@ -991,6 +992,12 @@ public class MainActivity extends Activity {
 //    }
 
     public class UpdateTableForFusedTimelineForMain extends AsyncTask<Void, Void, String> {
+        Context context;
+
+        public UpdateTableForFusedTimelineForMain(Context context) {
+            this.context = context;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -999,7 +1006,7 @@ public class MainActivity extends Activity {
 
         @Override
         protected String doInBackground(Void... params) {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
             int userid = sharedPreferences.getInt("userId", 1);
             Log.i(TAG, "updating table for timeline");
             String response = FusedDataModel.getFusedDataForMainTimeline(Calendar.getInstance().getTime(), userid, dbHandler);

@@ -90,13 +90,17 @@ public class LeaderBoardActivity extends Activity {
             TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
             SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
             dateView.setText(sf.format(Calendar.getInstance().getTime()));
-            ShowLeaders showLeaders = new ShowLeaders();
+            ShowLeaders showLeaders = new ShowLeaders(context);
             showLeaders.execute();
             return rootView;
         }
 
         public class ShowLeaders extends AsyncTask<Void, Void, String> {
             ArrayList<LeaderBoardModel> leaderBoardModels = new ArrayList<LeaderBoardModel>();
+            Context context;
+            public  ShowLeaders(Context context) {
+                this.context = context;
+            }
 
             @Override
             protected void onPreExecute() {

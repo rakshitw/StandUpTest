@@ -83,7 +83,7 @@ public class DayDetailFragment extends Fragment {
 
                 refreshFusedTimeLine(daysBeforeDate);
 
-                ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline();
+                ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline(context);
                 showFusedTimeline.execute(daysBeforeDate);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
@@ -96,6 +96,11 @@ public class DayDetailFragment extends Fragment {
     }
 
     public class ShowFusedTimeline extends AsyncTask<Date, Void, DatedResponse> {
+        Context context;
+        public  ShowFusedTimeline(Context context){
+            this.context = context;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();

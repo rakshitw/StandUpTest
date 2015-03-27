@@ -72,7 +72,7 @@ public class StepService extends Service implements SensorEventListener {
     private int sampling_rate = 5;  //Sample Rate for Sensor
     private static AtomicBoolean hasStepsStarted = new AtomicBoolean(false);
     private static AtomicBoolean hasStepRecordingStarted = new AtomicBoolean(false);
-
+    private BroadcastReceiver snoozeReceiver;
 
     private Timer myTimer;
     private int timer_interval = 15000; //Keep timer_interval to the maximum time
@@ -117,12 +117,11 @@ public class StepService extends Service implements SensorEventListener {
     private JSONArray notificationArray;
     private int userId;
     private Date lastNotificationTime = Calendar.getInstance().getTime();
-    private long sittingNotificationTime = 40 * 60 * 1000; //40 minutes
+    private long sittingNotificationTime = 40 * 30 * 1000; //40 minutes
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
-    private long fuseTimeGap = 8 * 60 * 1000;
-//    private long noNotificationRange =
+    private long fuseTimeGap = 8 * 60 * 1000;//    private long noNotificationRange =
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
      * a known auth error is being resolved, such as showing the account chooser or presenting a
@@ -276,7 +275,7 @@ public class StepService extends Service implements SensorEventListener {
 //        entityArray = new JSONArray();
         notificationArray = new JSONArray();
 
-//        Log.i(TAG, "is user validated " + isUserValidated );
+//        Log.i(TAG, "is user validated " + isUserVa`lidated );
 //        Log.i(TAG, "authentication response is " + response);
 
 
@@ -290,7 +289,7 @@ public class StepService extends Service implements SensorEventListener {
         /**
          * Initialize On foot end and start time
          */
-
+        receiveSnooze();
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -455,8 +454,8 @@ public class StepService extends Service implements SensorEventListener {
                                 "still for " + (int) timePeriod / 60000 + " minutes now";
                         lastNotificationTime = curr_time;
                         dbHandler.setTableNotificationActivityRecords(displayText, DetectedActivity.STILL, curr_time);
-
-                        showAlert(displayText);
+                        minNotificationGapTime = 10*60*1000;
+                        showAlertWithButton(displayText);
                         sendNotificationToServer(curr_time, displayText, DetectedActivity.STILL, 0);
                     }
 
@@ -1271,7 +1270,6 @@ public class StepService extends Service implements SensorEventListener {
         return dbHandler.getDayGoal(today);
     }
 
-    //
 
     protected void showAlert(String displayText) {
         // TODO Auto-generated method stub
@@ -1290,8 +1288,56 @@ public class StepService extends Service implements SensorEventListener {
                         .setAutoCancel(true);
 
 
+
         mBuilder.setContentIntent(pIntent);
         mNotificationManager.notify(2, mBuilder.build());
+    }
+
+    //
+
+    protected void showAlertWithButton(String displayText) {
+        // TODO Auto-generated method stub
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        Intent action_intent = new Intent();
+        action_intent.setAction("com.xrci.StandUp.StepService.Later");
+        PendingIntent pIntent = PendingIntent.getActivity(this, 2, intent, 0);
+        PendingIntent snoozeIntent = PendingIntent.getBroadcast(this, 12345, action_intent, PendingIntent.FLAG_UPDATE_CURRENT );
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .setContentTitle("StandUp and Move!!")
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText(displayText))
+                        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                        .setContentText(displayText)
+                        .setAutoCancel(true)
+                        .addAction(R.drawable.ic_launcher, "Remind me after 40 minutes", snoozeIntent );
+
+
+
+        mBuilder.setContentIntent(pIntent);
+        mNotificationManager.notify(2, mBuilder.build());
+    }
+
+    public void receiveSnooze(){
+        snoozeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+
+
+                if ("com.xrci.StandUp.StepService.Later".equals(action)) {
+                   minNotificationGapTime = 40*60*1000;
+                }
+            }
+
+        };
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.xrci.StandUp.StepService.Later");
+        registerReceiver(snoozeReceiver, intentFilter);
     }
 
 
