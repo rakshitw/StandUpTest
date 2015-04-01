@@ -31,7 +31,6 @@ import android.widget.TextView;
 import com.facebook.widget.ProfilePictureView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.DetectedActivity;
 import com.xrci.standup.utility.ComplianceModel;
 import com.xrci.standup.utility.FusedDataModel;
 import com.xrci.standup.utility.GetData;
@@ -57,7 +56,8 @@ public class MainActivity extends Activity {
     //    private DailyStatisticsCircle dSc;
     static private boolean userIsWorking = false;
     static private Date workingSinceTimeStamp;
-
+    static public String CURRENT_STATUS = "CURRENT_STATUS";
+    LocalBroadcastManager broadcaster;
     DatabaseHandler dbHandler;
 
 
@@ -174,7 +174,7 @@ public class MainActivity extends Activity {
             //setUpReceiverFromGCMService();
 
             //startListeningFromGCMService();
-            refreshStatisticsCircle();
+//            refreshStatisticsCircle();
             //refreshTimeLine();
 
             mGesture = new GestureDetector(this, mOnGesture);
@@ -184,10 +184,17 @@ public class MainActivity extends Activity {
             if (!isMyServiceRunning(StepService.class)) {
                 Intent startStepService = new Intent(getApplicationContext(), StepService.class);
                 startService(startStepService);
-                setGoogleFitHandler();
-                startListeningFromStepService();
-                startListeningFromMonitoringService();
             }
+            setGoogleFitHandler();
+            startListeningFromStepService();
+            startListeningFromMonitoringService();
+
+            /**
+             * Immediately propagate circleViews from StepService
+             */
+//            Intent currentDetail = new Intent(CURRENT_STATUS);
+//            broadcaster = LocalBroadcastManager.getInstance(this);
+//            broadcaster.sendBroadcast(currentDetail);
 
 
         } catch (Exception e) {
@@ -482,24 +489,24 @@ public class MainActivity extends Activity {
     }
 
 
-    protected void refreshStatisticsCircle() {
-        // TODO Auto-generated method stub
-        try {
-            long timePeriods[] = dbHandler.getTimeOfEachActivityToday(Calendar.getInstance().getTime());
-            int stillTime = (int) timePeriods[DetectedActivity.STILL];
-            int walkTime = (int) timePeriods[DetectedActivity.ON_FOOT];
-            int vehicleTime = (int) timePeriods[DetectedActivity.IN_VEHICLE];
-            int bikeTime = (int) timePeriods[DetectedActivity.ON_BICYCLE];
-
-            int workingTime = (int) timePeriods[utils.ACTIVITY_WORKING];
-//            dSc.setArcStartEndAngles(stillTime, walkTime, vehicleTime, bikeTime, workingTime);
-//            dSc.init();
-        } catch (Exception e) {
-            Logger.appendLog("Exception in refreshStatisticsCircle(MainActivity):" + e.getMessage(), true);
-        }
-
-
-    }
+//    protected void refreshStatisticsCircle() {
+//        // TODO Auto-generated method stub
+//        try {
+//            long timePeriods[] = dbHandler.getTimeOfEachActivityToday(Calendar.getInstance().getTime());
+//            int stillTime = (int) timePeriods[DetectedActivity.STILL];
+//            int walkTime = (int) timePeriods[DetectedActivity.ON_FOOT];
+//            int vehicleTime = (int) timePeriods[DetectedActivity.IN_VEHICLE];
+//            int bikeTime = (int) timePeriods[DetectedActivity.ON_BICYCLE];
+//
+//            int workingTime = (int) timePeriods[utils.ACTIVITY_WORKING];
+////            dSc.setArcStartEndAngles(stillTime, walkTime, vehicleTime, bikeTime, workingTime);
+////            dSc.init();
+//        } catch (Exception e) {
+//            Logger.appendLog("Exception in refreshStatisticsCircle(MainActivity):" + e.getMessage(), true);
+//        }
+//
+//
+//    }
 
 
     void setUpReceiverFromStepService() {
@@ -512,7 +519,7 @@ public class MainActivity extends Activity {
 
                     boolean refreshTimeLineOnly = intent.getBooleanExtra(StepService.REFRESH_TIMELINE_ONLY_STOP_LISTENING, false);
                     boolean refreshFusedTimeLine = intent.getBooleanExtra(StepService.STEPS_FUSE, false);
-
+                    Log.i(TAG, "receiving intent onReceive");
                     boolean updateStepsOnly = intent.getBooleanExtra(StepService.UPDATE_STEPS_ONLY, false);
                     Log.i(TAG, "UPDATE_STEPS_ONLY" + updateStepsOnly);
                     if (updateStepsOnly) {
@@ -523,7 +530,7 @@ public class MainActivity extends Activity {
                         Log.i(TAG, "intent today steps " + todaySteps);
                     }
                     if (refreshFusedTimeLine) {
-                         Context passContext = getApplicationContext();
+                        Context passContext = getApplicationContext();
                         UpdateTableForFusedTimelineForMain updateTableForFusedTimelineForMain = new UpdateTableForFusedTimelineForMain(context);
                         updateTableForFusedTimelineForMain.execute();
 
@@ -549,6 +556,8 @@ public class MainActivity extends Activity {
 
                     }
                 } catch (Exception e) {
+                    Log.i(TAG, "Exception in onReceive MonitoringService(MainActivity):" + e.getMessage());
+
                     Logger.appendLog("Exception in onReceive MonitoringService(MainActivity):" + e.getMessage(), true);
                 }
 
@@ -903,7 +912,7 @@ public class MainActivity extends Activity {
     }
 
 	/*
-	 private void parseMessageFromGCM(String string) {
+     private void parseMessageFromGCM(String string) {
 			// TODO Auto-generated method stub
 		 SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		 System.out.println("message from gcm:"+string);
@@ -969,6 +978,12 @@ public class MainActivity extends Activity {
         startActivity(intent);
     }
 
+    public void onFeedBack(View view) {
+        Intent intent = new Intent(this, FeedbackActivity.class);
+        startActivity(intent);
+
+    }
+
     //TODO remove hard coded stuff
 //    public void onFusedClick(View view) {
 //        TextView fusedTimeLine = (TextView) findViewById(R.id.textFusedTimeline);
@@ -1020,19 +1035,23 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String response) {
             super.onPostExecute(response);
-            if (!response.equals(GetData.INVALID_RESPONSE)
-                    && !response.equals(GetData.INVALID_PAYLOAD) && !response.equals(GetData.EXCEPTION)) {
-                CircleView circleView = (CircleView) findViewById(R.id.complianceCircle);
-                circleView.setTextLine1(response + "%");
-                if(Integer.parseInt(response) >= 50) {
-                    circleView.setFillColor(utils.COLOR_WALK);
-                }
-                else
-                    circleView.setFillColor(utils.COLOR_STILL);
+            try {
+                if (!response.equals(GetData.INVALID_RESPONSE)
+                        && !response.equals(GetData.INVALID_PAYLOAD) && !response.equals(GetData.EXCEPTION)) {
 
-                circleView.invalidate();
+                    CircleView circleView = (CircleView) findViewById(R.id.complianceCircle);
+                    circleView.setTextLine1(response + "%");
+                    if (Integer.parseInt(response) >= 50) {
+                        circleView.setFillColor(utils.COLOR_WALK);
+                    } else
+                        circleView.setFillColor(utils.COLOR_STILL);
+
+                    circleView.invalidate();
+                }
+                refreshTimeLine();
+            } catch (Exception e) {
+                Log.i(TAG, "exception in postExecute " + e.getMessage());
             }
-            refreshTimeLine();
         }
     }
 

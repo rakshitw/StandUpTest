@@ -2,40 +2,69 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/today_touch_selector"
     android:gravity="center_vertical"
     android:minHeight="?android:attr/listPreferredItemHeight"
-    android:orientation="horizontal"
-    android:background="@drawable/today_touch_selector">
+    android:orientation="horizontal">
 
     <LinearLayout
-        android:layout_height="wrap_content"
         android:layout_width="0dp"
-        android:layout_weight="7"
-        android:layout_marginTop="16dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:layout_marginLeft="40dp"
         android:layout_marginRight="40dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="7"
         android:orientation="horizontal">
 
-
-
-        <com.xrci.standup.views.DailyStatisticsCircle
-            android:id="@+id/dailyStatisiticsCircle"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="15dp"
-            android:gravity="center"
-            />
+            android:orientation="vertical">
 
-        <com.xrci.standup.views.DailyStatisticsCircle
-            android:id="@+id/dailyComplianceCircle"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:gravity="center"
+                android:text="Average Steps"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <com.xrci.standup.views.DailyStatisticsCircle
+                android:id="@+id/dailyStatisiticsCircle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="15dp"
-            android:gravity="center"
-            />
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:gravity="center"
+                android:text="Compliance"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
 
 
+            <com.xrci.standup.views.DailyStatisticsCircle
+                android:id="@+id/dailyComplianceCircle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:layout_marginLeft="15dp"
+                android:layout_marginRight="15dp"
+                android:gravity="center" />
+        </LinearLayout>
 
     </LinearLayout>
 

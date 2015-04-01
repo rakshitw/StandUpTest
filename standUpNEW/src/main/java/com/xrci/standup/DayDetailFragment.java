@@ -51,47 +51,50 @@ public class DayDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_day_detail, container, false);
-
-        context = getActivity();
-        applicationContext = getActivity().getApplicationContext();
-        currentCircle = (CircleView) view.findViewById(R.id.circleViewCurrent);
-        complianceCircle = (CircleView) view.findViewById(R.id.daydetailCompliance);
-        linearLayoutTimelineArea = (LinearLayout) view.findViewById(R.id.linearLayoutTimelineArea);
-        dbHandler = new DatabaseHandler(context);
-
-        Date daysBeforeDate = Calendar.getInstance().getTime();
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTime(new Date());
-        int steps = 0;
-        int compliance = 0;
-        Intent intent = getActivity().getIntent();
-        if (intent != null && intent.hasExtra(WeeklyFragment.intentFromWeekly)) {
-            int position = intent.getIntExtra(WeeklyFragment.intentFromWeekly, 0);
-            cal.add(Calendar.DAY_OF_YEAR, -position);
-            steps = intent.getIntExtra(WeeklyFragment.intentFromWeeklySteps, 0);
-            compliance = intent.getIntExtra(WeeklyFragment.intentFromWeeklyCompliance, 0);
-            daysBeforeDate = cal.getTime();
+        try {
+            context = getActivity();
+            applicationContext = getActivity().getApplicationContext();
+            currentCircle = (CircleView) view.findViewById(R.id.circleViewCurrent);
+            complianceCircle = (CircleView) view.findViewById(R.id.daydetailCompliance);
+            linearLayoutTimelineArea = (LinearLayout) view.findViewById(R.id.linearLayoutTimelineArea);
+            dbHandler = new DatabaseHandler(context);
 
 
-            try {
-                currentCircle.setTextLine1(Integer.toString(steps));
-                complianceCircle.setTextLine1(Integer.toString(compliance) + "%");
-                if (compliance <= 50)
-                    complianceCircle.setFillColor(utils.COLOR_STILL);
-                else
-                    complianceCircle.setFillColor(utils.COLOR_WALK);
+            Date daysBeforeDate = Calendar.getInstance().getTime();
+            Calendar cal = GregorianCalendar.getInstance();
+            cal.setTime(new Date());
+            int steps = 0;
+            int compliance = 0;
+            Intent intent = getActivity().getIntent();
+            if (intent != null && intent.hasExtra(WeeklyFragment.intentFromWeekly)) {
+                int position = intent.getIntExtra(WeeklyFragment.intentFromWeekly, 0);
+                cal.add(Calendar.DAY_OF_YEAR, -position);
+                steps = intent.getIntExtra(WeeklyFragment.intentFromWeeklySteps, 0);
+                compliance = intent.getIntExtra(WeeklyFragment.intentFromWeeklyCompliance, 0);
+                daysBeforeDate = cal.getTime();
 
-                refreshFusedTimeLine(daysBeforeDate);
 
-                ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline(context);
-                showFusedTimeline.execute(daysBeforeDate);
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                try {
+                    currentCircle.setTextLine1(Integer.toString(steps));
+                    complianceCircle.setTextLine1(Integer.toString(compliance) + "%");
+                    if (compliance <= 50)
+                        complianceCircle.setFillColor(utils.COLOR_STILL);
+                    else
+                        complianceCircle.setFillColor(utils.COLOR_WALK);
+
+                    refreshFusedTimeLine(daysBeforeDate);
+
+                    ShowFusedTimeline showFusedTimeline = new ShowFusedTimeline(context);
+                    showFusedTimeline.execute(daysBeforeDate);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
+            //System.out.println("view created");
+        } catch (Exception e) {
+            Log.i("DayDetailFragment", "Daydetailfragment exception " + e.getMessage());
         }
-        //System.out.println("view created");
-
         return view;
     }
 

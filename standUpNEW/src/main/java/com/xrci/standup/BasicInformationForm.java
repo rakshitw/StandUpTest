@@ -106,6 +106,9 @@ public class BasicInformationForm extends Activity {
                 displayString = "Enter your age.";
             else if (weightString.equals(""))
                 displayString = "Enter your weight.";
+            else if (heightString.equals(""))
+                displayString = "Enter your height.";
+
             else
                 displayString = "Please enter a valid email id.";
 
@@ -271,49 +274,52 @@ public class BasicInformationForm extends Activity {
 
 
             View rootView = inflater.inflate(R.layout.fragment_basic_information_form, container, false);
+            try {
 
-            Spinner dropdown = (Spinner)rootView.findViewById(R.id.organizationList);
-            String[] items = new String[]{"Xerox", "XRCI"};
+                Spinner dropdown = (Spinner) rootView.findViewById(R.id.organizationList);
+                String[] items = new String[]{"Xerox", "XRCI"};
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_dropdown_item, items);
-            dropdown.setAdapter(adapter);
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_dropdown_item, items);
+                dropdown.setAdapter(adapter);
 
 
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-            if(sharedPreferences.getString(registrationOrganization, "") != ""){
-                String myString = sharedPreferences.getString(registrationOrganization, ""); //the value you want the position for
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                if (sharedPreferences.getString(registrationOrganization, "") != "") {
+                    String myString = sharedPreferences.getString(registrationOrganization, ""); //the value you want the position for
 
-                ArrayAdapter checkAdapter = (ArrayAdapter) dropdown.getAdapter(); //cast to an ArrayAdapter
+                    ArrayAdapter checkAdapter = (ArrayAdapter) dropdown.getAdapter(); //cast to an ArrayAdapter
 
-                int spinnerPosition = checkAdapter.getPosition(myString);
+                    int spinnerPosition = checkAdapter.getPosition(myString);
 
 //set the default according to value
-                dropdown.setSelection(spinnerPosition);
-            }
+                    dropdown.setSelection(spinnerPosition);
+                }
 
 
-            EditText nameEt = (EditText) rootView.findViewById(R.id.nameText);
-            nameEt.setText(sharedPreferences.getString(registrationName, ""));
+                EditText nameEt = (EditText) rootView.findViewById(R.id.nameText);
+                nameEt.setText(sharedPreferences.getString(registrationName, ""));
 //            EditText organizationEt = (EditText) rootView.findViewById(R.id.organizationText);
 //            organizationEt.setText(sharedPreferences.getString(registrationOrganization, ""));
 
-            EditText emailEt = (EditText) rootView.findViewById(R.id.emailText);
-            emailEt.setText(sharedPreferences.getString(registrationEmail, ""));
-            EditText ageEt = (EditText) rootView.findViewById(R.id.ageText);
-            ageEt.setText(sharedPreferences.getString(registrationAge, ""));
-            EditText weightEt = (EditText) rootView.findViewById(R.id.textWeight);
-            weightEt.setText(sharedPreferences.getString(registrationWeight, ""));
+                EditText emailEt = (EditText) rootView.findViewById(R.id.emailText);
+                emailEt.setText(sharedPreferences.getString(registrationEmail, ""));
+                EditText ageEt = (EditText) rootView.findViewById(R.id.ageText);
+                ageEt.setText(sharedPreferences.getString(registrationAge, ""));
+                EditText weightEt = (EditText) rootView.findViewById(R.id.textWeight);
+                weightEt.setText(sharedPreferences.getString(registrationWeight, ""));
 
-            EditText heightEt = (EditText) rootView.findViewById(R.id.textHeight);
-            heightEt.setText(sharedPreferences.getString(registrationHeight, ""));
+                EditText heightEt = (EditText) rootView.findViewById(R.id.textHeight);
+                heightEt.setText(sharedPreferences.getString(registrationHeight, ""));
 
-            RadioButton sexRbMale = (RadioButton) rootView.findViewById(R.id.radioMale);
-            RadioButton sexRbFemale = (RadioButton) rootView.findViewById(R.id.radioFemale);
-            if(sharedPreferences.getString(registrationSex, "") == "M") {
-                sexRbMale.setChecked(true);
+                RadioButton sexRbMale = (RadioButton) rootView.findViewById(R.id.radioMale);
+                RadioButton sexRbFemale = (RadioButton) rootView.findViewById(R.id.radioFemale);
+                if (sharedPreferences.getString(registrationSex, "") == "M") {
+                    sexRbMale.setChecked(true);
+                } else if (sharedPreferences.getString(registrationSex, "") == "F")
+                    sexRbFemale.setChecked(true);
+            } catch (Exception e) {
+                Log.i("BasicInformationForm", "Exception in BasicInformationForm " +  e.getMessage());
             }
-            else if (sharedPreferences.getString(registrationSex, "") == "F")
-                sexRbFemale.setChecked(true);
             return rootView;
         }
     }

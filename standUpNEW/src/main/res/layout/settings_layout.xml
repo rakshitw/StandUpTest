@@ -36,6 +36,32 @@
 
         android:layout_width="wrap_content"
         android:layout_height="0dp"
+        android:layout_weight="0.1"
+        android:layout_marginTop="10dp"
+        android:text="Edit your height (cm)"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/editTextHeight"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:layout_weight="0.1"
+        android:background="#747474"
+        android:ems="10"
+        android:gravity="center"
+        android:inputType="number"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <TextView
+
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="0.05"
         android:text=""
         android:textAppearance="?android:attr/textAppearanceMedium"

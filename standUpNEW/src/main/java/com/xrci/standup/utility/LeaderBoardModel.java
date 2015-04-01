@@ -34,6 +34,10 @@ public class LeaderBoardModel {
         this.steps = steps;
     }
 
+    public static String getUrlForLeaderBoard(int userId) {
+        return uri + "/" + userId;
+    }
+
 
 
 }

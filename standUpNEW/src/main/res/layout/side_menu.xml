@@ -34,7 +34,7 @@
             android:id="@+id/textViewUserName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="20dp"
+            android:paddingTop="15dp"
             android:text="User"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="#8E8E8E"
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:gravity="right|center_vertical"
-            android:paddingTop="20dp"
+            android:paddingTop="10dp"
             facebook:preset_size="normal" />
         <TextView
             android:id="@+id/textViewPCSyncId"
@@ -59,17 +59,7 @@
             android:textStyle="bold" />
 
 
-        <TextView
 
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:layout_margin="10dp"
-            android:id="@+id/timelineStatusTextView"
-            android:textColor="#61717274"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-
-            android:textStyle="bold" />
 
 
         <!--<com.xrci.standup.views.DailyStatisticsCircle-->
@@ -86,7 +76,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:layout_margin="15dp"
+            android:layout_margin="10dp"
             android:onClick="onNotifications"
             android:paddingLeft="10dp"
             android:text="Notifications"
@@ -102,7 +92,7 @@
             android:layout_height="wrap_content"
             android:clickable="true"
             android:onClick="onWeek"
-            android:layout_margin="15dp"
+            android:layout_margin="10dp"
             android:paddingLeft="10dp"
             android:text="Week Performance"
             android:background="@drawable/touch_selector"
@@ -125,13 +115,28 @@
             <!--android:textColor="#ff745663"-->
             <!--android:textStyle="bold" />-->
 
+
+        <TextView
+            android:id="@+id/textLeaderBoard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:onClick="onLeaderBoard"
+            android:layout_margin="10dp"
+            android:paddingLeft="10dp"
+            android:text="Leaderboard"
+            android:background="@drawable/touch_selector"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#ff745663"
+            android:textStyle="bold" />
+
         <TextView
             android:id="@+id/textCustomize"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
             android:onClick="onCustomize"
-            android:layout_margin="15dp"
+            android:layout_margin="10dp"
             android:paddingLeft="10dp"
             android:text="Customize"
             android:background="@drawable/touch_selector"
@@ -140,19 +145,18 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/textLeaderBoard"
+            android:id="@+id/textFeedback"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:onClick="onLeaderBoard"
-            android:layout_margin="15dp"
+            android:onClick="onFeedBack"
+            android:layout_margin="10dp"
             android:paddingLeft="10dp"
-            android:text="Leaderboard"
+            android:text="Feedback"
             android:background="@drawable/touch_selector"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textColor="#ff745663"
             android:textStyle="bold" />
-
 
 
         <TextView
@@ -161,7 +165,7 @@
 
             android:layout_height="wrap_content"
             android:clickable="true"
-            android:layout_margin="15dp"
+            android:layout_margin="10dp"
             android:onClick="onLogout"
             android:paddingLeft="10dp"
             android:text="Logout"

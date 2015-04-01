@@ -230,6 +230,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+
     public void clearPendingServerLog(){
         SQLiteDatabase db = this.getReadableDatabase();
         db.rawQuery("DELETE FROM " + TABLE_PENDING_SERVER_LOG, null).moveToFirst();
@@ -870,20 +871,34 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public int getDayDataFromActivityLog(Date date) {
         int stepCount;
+        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        date.setHours(0);
+        date.setMinutes(0);
+        date.setSeconds(0);
+
+
+        String startTime = sf.format(date);
+        date.setHours(23);
+        date.setMinutes(59);
+        date.setSeconds(59);
+        String endTime = sf.format(date);
         //Make sure that date format and column format is consistent
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String dateString = simpleDateFormat.format(date);
-        String fetchDateOnly = dateString.substring(0, 10);
-        Log.i("cursor_db", fetchDateOnly);
+//        String dateString = simpleDateFormat.format(date);
+//        String fetchDateOnly = dateString.substring(0, 10);
+//        Log.i("cursor_db", fetchDateOnly);
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
-        Cursor cursor = db.rawQuery("SELECT " + "SUM (" + NO_OF_STEPS + ")" + " FROM " + TABLE_ACTIVITY_LOG + " WHERE " + KEY_START + " LIKE  ?", selectionArgs);
+//        String[] selectionArgs = new String[]{"%" + fetchDateOnly + "%"};
+        //where end  between "" + startTime + "\" and \"" + endTime + ""
+//        Cursor logCursor = db.rawQuery("Select activity,start,end,nofsteps,timeperiod from tbl_fused_activity_log where end  between \"" + startTime + "\" and \"" + endTime + "\" and discarded=0 order by end", null);
+
+        Cursor cursor = db.rawQuery("SELECT " + "SUM (" + NO_OF_STEPS + ")" + " FROM " + TABLE_ACTIVITY_LOG + " where end  between \"" + startTime + "\" and \"" + endTime + "\"" , null);
 //        db.close();
         if (cursor.moveToFirst()) {
             Log.i("cursor_log", "today steps are " + Integer.toString(cursor.getInt(0)));
             stepCount = cursor.getInt(0);
         } else
-            stepCount = 7000;
+            stepCount = 0;
 
         cursor.close();
         db.close();

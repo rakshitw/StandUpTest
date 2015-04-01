@@ -22,7 +22,7 @@ public class SettingsActivity extends Activity {
     TimePicker workplaceStartTimePicker;
     TimePicker workplaceEndTimePicker;
     //	CheckBox checkBoxOfficeTimeOnly;
-    EditText editTextStartTime, editTextEndTime, editTextWeight;
+    EditText editTextStartTime, editTextEndTime, editTextWeight, editTextHeight;
     int maximumSittingTime;
     int workplaceStartHour, workplaceStartMin, workplaceEndHour, workplaceEndMin;
     boolean alertAtOffice;
@@ -43,10 +43,13 @@ public class SettingsActivity extends Activity {
         editTextStartTime = (EditText) findViewById(R.id.editTextStartTime);
         editTextEndTime = (EditText) findViewById(R.id.editTextEndTime);
         editTextWeight = (EditText) findViewById(R.id.editTextWeight);
+        editTextHeight = (EditText) findViewById(R.id.editTextHeight);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         editTextStartTime.setText(sharedPreferences.getString(stopPingTimePeriodStart, "22:00"));
         editTextEndTime.setText(sharedPreferences.getString(stopPingTimePeriodEnd, "7:00"));
         editTextWeight.setText(sharedPreferences.getString(BasicInformationForm.registrationWeight,"65"));
+        editTextHeight.setText(sharedPreferences.getString(BasicInformationForm.registrationHeight,"160"));
+
 
 
 //        workplaceStartTimePicker.setIs24HourView(true);
@@ -79,33 +82,40 @@ public class SettingsActivity extends Activity {
 
 
     public void saveSettings(View v) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        String weight_orig = sharedPreferences.getString(BasicInformationForm.registrationWeight,"65");
-        int userId = sharedPreferences.getInt("userId", 0);
-        String weight_new = editTextWeight.getText().toString();
-//        {: 1,"weight": 80,"modificationDate" : "22-02-2015-23-55-22"}
-        if(!weight_new.equals(weight_orig)){
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("userId", userId);
-                jsonObject.put("weight", Integer.parseInt(weight_new));
-                SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
-                String date = sf.format(Calendar.getInstance().getTime());
-                jsonObject.put("modificationDate", date );
-                String data = jsonObject.toString();
-                ChangeWeight  changeWeight = new ChangeWeight();
-                changeWeight.execute(data);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        try {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String weight_orig = sharedPreferences.getString(BasicInformationForm.registrationWeight, "65");
+            String height_orig = sharedPreferences.getString(BasicInformationForm.registrationWeight, "160");
 
-        }
-        settingsUpdated = true;
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        Editor editor = preferences.edit();
-        editor.putString(stopPingTimePeriodEnd, editTextEndTime.getText().toString());
-        editor.putString(stopPingTimePeriodStart,editTextStartTime.getText().toString() );
-        editor.putString(BasicInformationForm.registrationWeight, editTextWeight.getText().toString());
+            int userId = sharedPreferences.getInt("userId", 0);
+            String weight_new = editTextWeight.getText().toString();
+            String height_new = editTextHeight.getText().toString();
+
+
+//        {: 1,"weight": 80,"modificationDate" : "22-02-2015-23-55-22"}
+            if (!weight_new.equals(weight_orig) || !height_new.equals(height_orig)) {
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject.put("userId", userId);
+                    jsonObject.put("weight", Integer.parseInt(weight_new));
+                    jsonObject.put("height", Integer.parseInt(height_new));
+                    SimpleDateFormat sf = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+                    String date = sf.format(Calendar.getInstance().getTime());
+                    jsonObject.put("modificationDate", date);
+                    String data = jsonObject.toString();
+                    ChangeWeight changeWeight = new ChangeWeight();
+                    changeWeight.execute(data);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            settingsUpdated = true;
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            Editor editor = preferences.edit();
+            editor.putString(stopPingTimePeriodEnd, editTextEndTime.getText().toString());
+            editor.putString(stopPingTimePeriodStart, editTextStartTime.getText().toString());
+            editor.putString(BasicInformationForm.registrationWeight, editTextWeight.getText().toString());
 //	    try
 //	    {
 ////		maximumSittingTime=Integer.parseInt(editTextMaxSittingTime.getText().toString());
@@ -131,7 +141,11 @@ public class SettingsActivity extends Activity {
 //
 
 
-        editor.commit();
+            editor.commit();
+        } catch (Exception e) {
+            Log.i("SettingActivity", "exception in setting activity" + e.getMessage());
+        }
+
 
         finish();
     }

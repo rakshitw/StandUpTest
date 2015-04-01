@@ -1,5 +1,6 @@
 package com.xrci.standup;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,14 +10,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -43,11 +48,19 @@ import com.xrci.standup.utility.PostNotificationModel;
 
 import org.json.JSONArray;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -83,19 +96,19 @@ public class StepService extends Service implements SensorEventListener {
     private Value cumulative_val;
     private static final int REQUEST_OAUTH = 1;
 
-    private  AtomicBoolean isStill = new AtomicBoolean(true);
+    private AtomicBoolean isStill = new AtomicBoolean(true);
     private Date stillStartTime = Calendar.getInstance().getTime();
     private Date stillEndTime = Calendar.getInstance().getTime();
-    private  AtomicBoolean hasStillStarted = new AtomicBoolean(false);
-    private  AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
+    private AtomicBoolean hasStillStarted = new AtomicBoolean(false);
+    private AtomicBoolean hasSittingEndedByUnknown = new AtomicBoolean(false);
 
-    private  AtomicBoolean isUnknown = new AtomicBoolean(false);
+    private AtomicBoolean isUnknown = new AtomicBoolean(false);
     private Date unknownStartTime = Calendar.getInstance().getTime();
     private Date unknownEndTime = Calendar.getInstance().getTime();
     private Date pseudoStartUnknownTime = Calendar.getInstance().getTime();
     private Date pseudoEndUnknownTime = Calendar.getInstance().getTime();
-    private  AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
-    private  AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
+    private AtomicBoolean hasUnknownRecordingStarted = new AtomicBoolean(false);
+    private AtomicBoolean hasUnknownStarted = new AtomicBoolean(false);
 
 
     static final public String UPDATE_CURRENT_FRAGMENT = "com.xrci.standup.update_fragment";
@@ -113,11 +126,11 @@ public class StepService extends Service implements SensorEventListener {
     private DatabaseHandler dbHandler;
     private static final String GOALSETDAY = "goalsetday";
     private boolean isUserValidated = false;
-//    private JSONArray entityArray;
+    //    private JSONArray entityArray;
     private JSONArray notificationArray;
     private int userId;
     private Date lastNotificationTime = Calendar.getInstance().getTime();
-    private long sittingNotificationTime = 40 * 30 * 1000; //40 minutes
+    private long sittingNotificationTime = 40 * 60 * 1000; //40 minutes
     private long minNotificationGapTime = 10 * 60 * 1000;
     private boolean goalAchievedNotification = false;
     private Date lastFusedTime = Calendar.getInstance().getTime();
@@ -153,6 +166,13 @@ public class StepService extends Service implements SensorEventListener {
     BroadcastReceiver fitResolutionBroadcastReceiver;
 
     private PowerManager.WakeLock mWakeLock;
+
+    /**
+     * data collection initialization
+     */
+    private float lux = -1.0f;
+    private boolean lightDone = false;
+    private int count = 0;
 
 
     public StepService() {
@@ -213,6 +233,7 @@ public class StepService extends Service implements SensorEventListener {
          * Initializing variables in onCreate too to avoid
          * discrepancies that may arise due to multiple stepService running..if so :/
          */
+
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         curr_time = Calendar.getInstance().getTime();
@@ -278,7 +299,7 @@ public class StepService extends Service implements SensorEventListener {
 //        Log.i(TAG, "is user validated " + isUserVa`lidated );
 //        Log.i(TAG, "authentication response is " + response);
 
-
+        getFgApp(true);
         Log.i(TAG, "service started");
         /**
          * Initialize sensor manager for proximity and
@@ -296,18 +317,9 @@ public class StepService extends Service implements SensorEventListener {
 //        showAlert("service started at " + Calendar.getInstance().getTime());
         //Set step goal
         setTodayGoal();
-//        Logger.appendLog("service started", true);
-        myTimer = new Timer();
-        //Regularly checks if end time for
-        // a step session has reached or not
-        myTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                checkInterval();
-                Log.i(TAG, "in timer");
-            }
-        }, 0, timer_interval);
-
+        /**
+         * To  CircleViews
+         */
         setmWakeLock();
         // [START auth_connection_flow_in_activity_lifecycle_methods]
         //Recieve and listen for any google API Resolution
@@ -319,6 +331,30 @@ public class StepService extends Service implements SensorEventListener {
         buildFitnessClient();
         Log.i(TAG, "Connecting...");
         mClient.connect();
+
+//        Logger.appendLog("service started", true);
+        myTimer = new Timer();
+        //Regularly checks if end time for
+        // a step session has reached or not
+        myTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    userFacing = false;
+                    count = 0;
+                    //both = false;
+                    lightDone = false;
+                    lux = -1.0f;
+                    startLightSensors();
+                    checkInterval();
+                    Log.i(TAG, "in timer");
+                } catch (Exception e) {
+                    Log.i(TAG, "exception in check iterval StepService" + e.getMessage());
+                }
+            }
+        }, 0, timer_interval);
+
+
     }
 
     /**
@@ -357,6 +393,8 @@ public class StepService extends Service implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        rangeProximity = mProximity.getMaximumRange();
+
 
         accel = 0.0f;
         accelLast = SensorManager.GRAVITY_EARTH;
@@ -423,16 +461,27 @@ public class StepService extends Service implements SensorEventListener {
                 SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 String startTimeToCompare = sharedPreferences.getString(SettingsActivity.stopPingTimePeriodStart, "22:00");
                 String endTimeToCompare = sharedPreferences.getString(SettingsActivity.stopPingTimePeriodEnd, "07:00");
+                int startCompareHours = 22;
+                int startCompareMins = 0;
 
-                int startCompareHours = Integer.parseInt(startTimeToCompare.substring(0,2));
-                int startCompareMins = Integer.parseInt(startTimeToCompare.substring(3,5));
-                long notificationHourMin =  notificationHour*60 + notificationMinute;
-                long compareStartHourMin = startCompareHours*60 + startCompareMins;
+                try {
+                    startCompareHours = Integer.parseInt(startTimeToCompare.substring(0, startTimeToCompare.indexOf(":")));
+                    startCompareMins = Integer.parseInt(startTimeToCompare.substring(startTimeToCompare.indexOf(":") + 1, startTimeToCompare.length()));
+                } catch (Exception e) {
+                    Log.i(TAG, "exception caught in StepService at startTimeToCompare " + e.getMessage());
 
-                int endCompareHours = Integer.parseInt(endTimeToCompare.substring(0,2));
-                int endCompareMins = Integer.parseInt(endTimeToCompare.substring(3,5));
-
-                long compareEndHourMin = endCompareHours*60 + endCompareMins;
+                }
+                long notificationHourMin = notificationHour * 60 + notificationMinute;
+                long compareStartHourMin = startCompareHours * 60 + startCompareMins;
+                int endCompareHours = 7;
+                int endCompareMins = 0;
+                try {
+                    endCompareHours = Integer.parseInt(endTimeToCompare.substring(0, endTimeToCompare.indexOf(":")));
+                    endCompareMins = Integer.parseInt(endTimeToCompare.substring(endTimeToCompare.indexOf(":") + 1, endTimeToCompare.length()));
+                } catch (Exception e) {
+                    Log.i(TAG, "exception caught in StepService at endTimeToCompare " + e.getMessage());
+                }
+                long compareEndHourMin = endCompareHours * 60 + endCompareMins;
 
 
                 /**
@@ -443,9 +492,9 @@ public class StepService extends Service implements SensorEventListener {
                  * hour+min of notification is between end and start time
                  */
                 if (((compareStartHourMin < compareEndHourMin) && ((notificationHourMin < compareStartHourMin)
-                        ||(notificationHourMin > compareEndHourMin)))
+                        || (notificationHourMin > compareEndHourMin)))
                         || ((compareStartHourMin > compareEndHourMin) && (notificationHourMin > compareEndHourMin)
-                        && (notificationHourMin < compareStartHourMin))){
+                        && (notificationHourMin < compareStartHourMin))) {
 
                     if ((curr_time.getTime() - stillStartTime.getTime()) > sittingNotificationTime
                             && (curr_time.getTime() - lastNotificationTime.getTime()) > minNotificationGapTime) {
@@ -454,7 +503,7 @@ public class StepService extends Service implements SensorEventListener {
                                 "still for " + (int) timePeriod / 60000 + " minutes now";
                         lastNotificationTime = curr_time;
                         dbHandler.setTableNotificationActivityRecords(displayText, DetectedActivity.STILL, curr_time);
-                        minNotificationGapTime = 10*60*1000;
+                        minNotificationGapTime = 10 * 60 * 1000;
                         showAlertWithButton(displayText);
                         sendNotificationToServer(curr_time, displayText, DetectedActivity.STILL, 0);
                     }
@@ -470,7 +519,7 @@ public class StepService extends Service implements SensorEventListener {
                     lastFusedTime = curr_time;
                 } else
                     updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
-                        - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
+                            - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
 
             }
 
@@ -849,6 +898,7 @@ public class StepService extends Service implements SensorEventListener {
     void updateActivityUI(int activity2, Date startTime, long timePeriod, boolean refreshTimeline
             , boolean updateStepsOnly, int steps, boolean refreshtimeLineOnly, int steps_today, boolean fuseTimeline) {
         try {
+            Log.i(TAG, "in update activity");
             SimpleDateFormat sf = new SimpleDateFormat("HH:mm");
             Intent intent = new Intent(UPDATE_CURRENT_FRAGMENT);
             intent.putExtra(REFRESH_TIMELINE, refreshTimeline);
@@ -865,9 +915,13 @@ public class StepService extends Service implements SensorEventListener {
 
 
             //System.out.println("TimePeriod"+timePeriod);
+            if (broadcaster == null) {
 
+                broadcaster = LocalBroadcastManager.getInstance(this);
+            }
             broadcaster.sendBroadcast(intent);
         } catch (Exception e) {
+            Log.i(TAG, "Exception in updateActivityUI(StepService)" + e.getMessage());
             Logger.appendLog("Exception in updateActivityUI(ActivityMonitoringService)" + e.getMessage(), true);
 
         }
@@ -886,6 +940,19 @@ public class StepService extends Service implements SensorEventListener {
     private boolean isFaceUp = true;
     private float accelLast, accelNow, accel;
 
+    /**
+     * Also includes the code not visible to user
+     *
+     * @param event
+     */
+    private boolean isFlat = false;
+    private boolean isDark = false;
+    private String status = null;
+    private boolean userFacing = false;
+    private boolean both = false;
+    private float rangeProximity;
+
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
@@ -893,6 +960,7 @@ public class StepService extends Service implements SensorEventListener {
             float axis[];// = new float[3];
             //float linear_acceleration[] = new float[3];
             axis = event.values.clone();
+
 
             float norm = (float) Math.sqrt(axis[0] * axis[0] +
                     axis[1] * axis[1] + axis[2] * axis[2]);
@@ -907,8 +975,29 @@ public class StepService extends Service implements SensorEventListener {
             axis[2] /= norm;
             int inclination = (int) Math.round(Math.toDegrees(Math.acos(axis[2])));
 
+            ++count;
+
 
             if (inclination < 10 || inclination > 170) {
+                /**
+                 * Not known to user code
+                 */
+
+                isFlat = true;
+                isFaceUp = inclination < 25;
+                if (!isDark && isFaceUp) {
+                    status = "On Table (Face Up)";
+                } else if (isDark && !isFaceUp) {
+                    status = "On Table (Face Down)";
+                } else if (!isDark && !isFaceUp) {
+                    status = "In Hand (Face Away)";
+                } else if (isDark && isFaceUp) {
+                    status = "In Pocket";
+                }
+                /**
+                 *
+                 */
+
 //                Log.i(TAG, "FLAT inclination=" + inclination);
                 onTable = true;
                 pseudoEndUnknownTime = Calendar.getInstance().getTime();
@@ -930,11 +1019,30 @@ public class StepService extends Service implements SensorEventListener {
 
                 }
 
-//                isFaceUp = inclination < 25;
-//                if (!isDark && isFaceUp) {
-//                    Log.i(TAG, "TABLE face up");
-//                }
             } else {
+
+                /**
+                 * Code not visible to user
+                 *
+                 */
+                isFlat = false;
+                int rotation = (int) Math.round(Math.toDegrees(Math.atan2(axis[0], axis[1])));
+                if (!isDark) {
+                    if (inclination < 90 && Math.abs(rotation) < 20) {
+                        status = "In Hand (Face Up)";
+                        userFacing = true;
+                    } else {
+                        status = "In Hand (Face Away)";
+                        userFacing = false;
+                    }
+                } else {
+                    status = "In Pocket";
+                }
+
+
+                /**
+                 *
+                 */
                 onTable = false;
                 pseudoStartUnknownTime = Calendar.getInstance().getTime();
                 if (hasUnknownStarted.get() && isStill.get()) {
@@ -958,36 +1066,190 @@ public class StepService extends Service implements SensorEventListener {
                 }
             }
 
-//                int rotation = (int) Math.round(Math.toDegrees(Math.atan2(axis[0], axis[1])));
-//                Log.i(TAG, "NOT FLAT");
-//                Log.i(TAG, "Rotated : " + rotation + " degrees");
-//                if (!isDark) {
-//                    Log.i(TAG, "In Hand");
-//                }
+        } else if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
+            //Log.d(TAG, "Got Proximity Reading!");
+            both = true;
+            float distance = event.values[0];
+            isDark = distance < rangeProximity;
+        } /**
+         * Check light on
+         */
 
-//        }
-// else if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
-//            float distance = event.values[0];
-//            Log.d(TAG, "Proximity: " + distance);
-//            isDark = distance == 0.0f;
-//
-//            if (isDark) {
-//                if (onTable && !isMoving && !isFaceUp) {
-//                    Log.i(TAG, "Face down on table");
-//                } else {
-//                    Log.i(TAG, "POCKET");
-//                }
-//            } else {
-//                if (onTable && !isMoving && isFaceUp) {
-//                    Log.i(TAG, "TABLE face up");
-//                } else {
-//                    Log.i(TAG, "In hand");
-//                }
-//            }
-//        }
+        else if (sensor.getType() == Sensor.TYPE_LIGHT) {
+            //Log.d(TAG,"Got Light Sensor Reading!");
+            lux = event.values[0];
+            lightDone = true;
+        }
+
+        if (count > 10 && both && lightDone) {
+            count = -1;
+            func();
+            //count = -1;
         }
 
     }
+
+    /**
+     * Code not visible to user
+     */
+
+
+    private void func() {
+        String fname = "xrci_log";
+//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH);
+        File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/XrciVideo2");
+        dir.mkdirs();
+        String filename = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                "/XrciVideo2/" + fname /*+ "_" + sdf.format(new Date())*/ + ".csv";
+//        Log.d(TAG, "Set output file: " + filename);
+
+        BufferedOutputStream bos = null;
+        try {
+            bos = new BufferedOutputStream(new FileOutputStream(filename, true));
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, e.getMessage());
+            e.printStackTrace();
+        }
+
+        String string = null;
+
+        String fgApp = getFgApp(false);
+
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, ifilter);
+
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        float batteryPct = 100 * level / (float) scale;
+        int brightness = -1;
+        try {
+            brightness = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
+        } catch (Settings.SettingNotFoundException e) {
+            Log.e(TAG, "Brightness Settings not Found");
+        }
+        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        boolean isScreenOn = pm.isScreenOn();
+
+        int battStatus = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+        boolean isCharging = battStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
+                battStatus == BatteryManager.BATTERY_STATUS_FULL;
+        String charging = isCharging ? "Charging" : "Battery";
+
+        string = " Date : " + new Date().toString() + "," + " position : " +  status + "," + " battery : " + batteryPct + "%" + charging + ","
+                + "brightness : " +  brightness + "," + "ScreenOn: " + isScreenOn + "," + " AmbientLight : "
+                + lux + " lx," + " App : " +  fgApp + "\n";
+
+//        Log.d(TAG, "Writing: " + string);
+
+        try {
+            bos.write(string.getBytes());
+            bos.flush();
+            bos.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        stopOtherSensors();
+    }
+
+    /**
+     * Code not visible to user
+     */
+    private Sensor mLight;
+
+    public void stopOtherSensors() {
+        if (mSensorManager != null) {
+            mSensorManager.unregisterListener(this, mProximity);
+            mSensorManager.unregisterListener(this, mLight);
+//            Log.d(TAG, "Stop Other Sensors");
+        }
+    }
+
+    public void startLightSensors() {
+        mLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
+        mSensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    /**
+     * Code not visible to user
+     */
+    private static final String PREFS_NAME = "prefSensor";
+    private static final String PREF_ISSET_NAME = "isset";
+    private static final String PREF_SET_NAME = "appset";
+
+    private String getFgApp(boolean first) {
+        String fgApp = "";
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isset = settings.getBoolean(PREF_ISSET_NAME, false);
+
+        if (first && isset)
+            return "";
+
+        Set<String> appset = null;
+        if (isset) {
+            appset = settings.getStringSet(PREF_SET_NAME, null);
+        } else {
+            appset = new HashSet<String>();
+        }
+
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        PackageManager pacm = getPackageManager();
+        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                String s = "";
+                if (!isset) {
+                    if (!this.getPackageName().equals(appProcess.processName)) {
+                        appset.add(appProcess.processName);
+                    } else {
+                        fgApp += appProcess.processName;
+                        try {
+                            CharSequence c = pacm.getApplicationLabel(pacm.getApplicationInfo(appProcess.processName, PackageManager.GET_META_DATA));
+                            s += "(" + c.toString() + ") ";
+                        } catch (PackageManager.NameNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        fgApp += s;
+                    }
+                } else {
+                    if (!appset.contains(appProcess.processName)) {
+                        fgApp += appProcess.processName;
+                        try {
+                            CharSequence c = pacm.getApplicationLabel(pacm.getApplicationInfo(appProcess.processName, PackageManager.GET_META_DATA));
+                            s += "(" + c.toString() + ") ";
+                        } catch (PackageManager.NameNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        fgApp += s;
+                    }
+                }
+            }
+        }
+
+//        Log.d(TAG, fgApp);
+
+        if (!isset) {
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putStringSet(PREF_SET_NAME, appset);
+            editor.putBoolean(PREF_ISSET_NAME, true);
+            editor.commit();
+        }
+
+        return fgApp;
+    }
+
+    /**
+     *
+     */
+
+
+    /**
+     * @param sensor
+     * @param accuracy
+     */
+
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -1036,7 +1298,6 @@ public class StepService extends Service implements SensorEventListener {
 ////                + entityArray.length(),Toast.LENGTH_SHORT).show();
 //
 //    }
-
     private void sendActivityDetailToServerFromDB(Date activityStartTime, Date activityEndTime, int typeId, int steps) {
         //TODO change this format at server
 //        Log.i(TAG, "entity length before send  " + entityArray.length());
@@ -1047,7 +1308,7 @@ public class StepService extends Service implements SensorEventListener {
         Log.i(TAG, " sendActivityDetailToServerFromDB userId is " + userId);
 
         dbHandler.addPendingServerActivity(activityStartTime, activityEndTime, typeId, steps);
-        ArrayList<PostActivityDetailsModel> postActivityDetailsModels =  dbHandler.getPostActivityModelFromServerLog(userId);
+        ArrayList<PostActivityDetailsModel> postActivityDetailsModels = dbHandler.getPostActivityModelFromServerLog(userId);
 
         Log.i(TAG, "arraylist size is " + postActivityDetailsModels.size());
         JSONArray sendActivityArray = new JSONArray();
@@ -1192,53 +1453,53 @@ public class StepService extends Service implements SensorEventListener {
             int prevGoal = dbHandler.getDayGoal(yesterday);
             if (steps < 4000) {
                 goal = 4000;
-                if (prevGoal >= goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal >= goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 5000) {
                 goal = 5000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 6000) {
                 goal = 6000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 7000) {
                 goal = 7000;
 
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Go for more than " + goal + " steps today";
             } else if (steps < 8000) {
                 goal = 8000;
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Doing great! Now strive for " + goal + " steps today";
             } else if (steps < 9000) {
                 goal = 9000;
 
-                if (prevGoal > goal){
-                    goal = (goal + prevGoal)/2;
+                if (prevGoal > goal) {
+                    goal = (goal + prevGoal) / 2;
                 }
-                float goalRound = goal/1000;
-                goal = (int)WeeklyAdapter.round(goalRound, 0)*1000;
+                float goalRound = goal / 1000;
+                goal = (int) WeeklyAdapter.round(goalRound, 0) * 1000;
                 message = "Doing great! Now strive for " + goal + " steps today";
             } else {
                 goal = 10000;
@@ -1288,7 +1549,6 @@ public class StepService extends Service implements SensorEventListener {
                         .setAutoCancel(true);
 
 
-
         mBuilder.setContentIntent(pIntent);
         mNotificationManager.notify(2, mBuilder.build());
     }
@@ -1302,7 +1562,7 @@ public class StepService extends Service implements SensorEventListener {
         Intent action_intent = new Intent();
         action_intent.setAction("com.xrci.StandUp.StepService.Later");
         PendingIntent pIntent = PendingIntent.getActivity(this, 2, intent, 0);
-        PendingIntent snoozeIntent = PendingIntent.getBroadcast(this, 12345, action_intent, PendingIntent.FLAG_UPDATE_CURRENT );
+        PendingIntent snoozeIntent = PendingIntent.getBroadcast(this, 12345, action_intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
@@ -1313,15 +1573,14 @@ public class StepService extends Service implements SensorEventListener {
                         .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                         .setContentText(displayText)
                         .setAutoCancel(true)
-                        .addAction(R.drawable.ic_launcher, "Remind me after 40 minutes", snoozeIntent );
-
+                        .addAction(R.drawable.ic_launcher, "Remind me after 40 minutes", snoozeIntent);
 
 
         mBuilder.setContentIntent(pIntent);
         mNotificationManager.notify(2, mBuilder.build());
     }
 
-    public void receiveSnooze(){
+    public void receiveSnooze() {
         snoozeReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -1329,7 +1588,7 @@ public class StepService extends Service implements SensorEventListener {
 
 
                 if ("com.xrci.StandUp.StepService.Later".equals(action)) {
-                   minNotificationGapTime = 40*60*1000;
+                    minNotificationGapTime = 40 * 60 * 1000;
                 }
             }
 
@@ -1339,6 +1598,4 @@ public class StepService extends Service implements SensorEventListener {
         intentFilter.addAction("com.xrci.StandUp.StepService.Later");
         registerReceiver(snoozeReceiver, intentFilter);
     }
-
-
 }

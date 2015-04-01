@@ -40,36 +40,39 @@ public class WeeklyFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_weekly, container, false);
 //        context = getActivity().getApplicationContext();
-        mListView = (ListView) rootView.findViewById(R.id.listview_weekly);
-        final ArrayList<DayDetails> days = findWeeklySteps(getActivity().getApplicationContext());
-        weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, days);
+        try {
+            mListView = (ListView) rootView.findViewById(R.id.listview_weekly);
+            final ArrayList<DayDetails> days = findWeeklySteps(getActivity().getApplicationContext());
+            weeklyAdapter = new WeeklyAdapter(getActivity(), R.layout.list_item_weekly, days);
 
-        mListView.setAdapter(weeklyAdapter);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
+            mListView.setAdapter(weeklyAdapter);
+            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (position == 0) {
 //                    Intent startMain = new Intent(getActivity().getApplicationContext(), MainActivity.class);
 //                    startActivity(startMain);
-                } else {
-                    Intent intent = new Intent(getActivity().getApplicationContext(),
-                            DayDetailActivity.class).putExtra(intentFromWeekly, position)
-                            .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken())
-                            .putExtra(intentFromWeeklyCompliance, days.get(position).getCompliance());
-                    startActivity(intent);
+                    } else {
+                        Intent intent = new Intent(getActivity().getApplicationContext(),
+                                DayDetailActivity.class).putExtra(intentFromWeekly, position)
+                                .putExtra(intentFromWeeklySteps, days.get(position).getStepsTaken())
+                                .putExtra(intentFromWeeklyCompliance, days.get(position).getCompliance());
+                        startActivity(intent);
+                    }
+
                 }
-
-            }
-        });
+            });
 
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
 
-        int userid = sharedPreferences.getInt("userId", 0);
+            int userid = sharedPreferences.getInt("userId", 0);
 
-        ComplianceSettingClass complianceSettingClass = new ComplianceSettingClass(getActivity().getApplicationContext());
-        complianceSettingClass.execute(userid);
-
+            ComplianceSettingClass complianceSettingClass = new ComplianceSettingClass(getActivity().getApplicationContext());
+            complianceSettingClass.execute(userid);
+        } catch (Exception e) {
+            Log.i("WeeklyFragemt", "Exception in weekly fragment " + e.getMessage());
+        }
         return rootView;
 
     }

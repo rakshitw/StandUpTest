@@ -190,8 +190,10 @@ public class DailyStatisticsCircle extends AbstractBaseView {
     	 switch(activity)
     	 {
     	 case DetectedActivity.STILL:
+             strokeColor=utils.COLOR_STILL;
+             break;
     	 case utils.ACTIVITY_WORKING:
-    		 strokeColor=utils.COLOR_STILL;
+    		 strokeColor=utils.COLOR_UNKNOWN;
     		 break;
     	 case DetectedActivity.ON_FOOT:
     		 strokeColor=utils.COLOR_WALK;
@@ -201,6 +203,7 @@ public class DailyStatisticsCircle extends AbstractBaseView {
     		 break;
     	 case DetectedActivity.IN_VEHICLE:
     		 strokeColor=utils.COLOR_VEHICLE;
+             break;
     	 }
     	 
     	Paint paint=new Paint();

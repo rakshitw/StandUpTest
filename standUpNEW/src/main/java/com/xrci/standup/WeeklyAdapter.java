@@ -50,93 +50,99 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
             view = getInflatedLayout(position);
 
         }
+        try {
+            DayDetails day = getItem(position);
 
-        DayDetails day = getItem(position);
 
-
-        if (day != null) {
-            DailyStatisticsCircle dailyStatistics = (DailyStatisticsCircle) view.findViewById(R.id.dailyStatisiticsCircle);
-            DailyStatisticsCircle complianceCircle = (DailyStatisticsCircle) view.findViewById(R.id.dailyComplianceCircle);
-            TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
-            TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
+            if (day != null) {
+                DailyStatisticsCircle dailyStatistics = (DailyStatisticsCircle) view.findViewById(R.id.dailyStatisiticsCircle);
+                DailyStatisticsCircle complianceCircle = (DailyStatisticsCircle) view.findViewById(R.id.dailyComplianceCircle);
+                TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
+                TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
 //            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
-            if (day.getStepsTaken() >= 1000){
-                float displpaySteps =  round((float)day.getStepsTaken()/1000, 1);
-                dailyStatistics.setCenterText(displpaySteps + "K " + " steps");
-            }else
-                dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()) + " steps");
-            if (complianceCircle == null) {
-                Log.i("check", "compliance circle is null");
-            } else
-                complianceCircle.setCenterText(" " + Integer.toString(day.getCompliance()) + "%  ");
+                if (position == 0) {
+                    if (day.getStepsTaken() >= 1000) {
+                        float displpaySteps = round((float) day.getStepsTaken() / 1000, 1);
+                        dailyStatistics.setCenterText(displpaySteps + "K ");
+                    } else
+                        dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()));
+                } else if (day.getDayGoal() != 0) {
+                    int goalPercent = ((day.getStepsTaken() * 100) / day.getDayGoal()) ;
+                    dailyStatistics.setCenterText(" " + goalPercent + "%");
+                }
 
-            if (dateView != null) {
-                if (day.getDate() != null) {
-                    Calendar cal = GregorianCalendar.getInstance();
-                    cal.setTime(new Date());
-                    cal.add(Calendar.DAY_OF_YEAR, -1);
-                    Date dayBeforeDate = cal.getTime();
-
-                    String dateString = simpleDateFormat.format(day.getDate());
-                    String compareDate = simpleDateFormat.format(dayBeforeDate);
-                    if (dateString.compareTo(compareDate) == 0)
-                        dateView.setText("Yesterday");
-                    else
-                        dateView.setText(dateString);
+                if (complianceCircle == null) {
+                    Log.i("check", "compliance circle is null");
                 } else
-                    dateView.setText("Week Statistics");
-            }
-            if (achieveView != null) {
-                if (day.getGoalAchieved() != null)
-                    if (day.getGoalAchieved())
-                        achieveView.setText("Goal: " + day.getDayGoal() + " Steps: " + day.getStepsTaken());
-                    else {
-                        if (day.getStepsTaken() == 0)
-                            achieveView.setText("Information Not Available");
+                    complianceCircle.setCenterText(" " + Integer.toString(day.getCompliance()) + "%");
+
+                if (dateView != null) {
+                    if (day.getDate() != null) {
+                        Calendar cal = GregorianCalendar.getInstance();
+                        cal.setTime(new Date());
+                        cal.add(Calendar.DAY_OF_YEAR, -1);
+                        Date dayBeforeDate = cal.getTime();
+
+                        String dateString = simpleDateFormat.format(day.getDate());
+                        String compareDate = simpleDateFormat.format(dayBeforeDate);
+                        if (dateString.compareTo(compareDate) == 0)
+                            dateView.setText("Yesterday");
                         else
+                            dateView.setText(dateString);
+                    } else
+                        dateView.setText("Week Statistics");
+                }
+                if (achieveView != null) {
+                    if (day.getGoalAchieved() != null)
+                        if (day.getGoalAchieved())
+                            achieveView.setText("Goal: " + day.getDayGoal() + " Steps: " + day.getStepsTaken());
+                        else {
+                            if (day.getStepsTaken() == 0)
+                                achieveView.setText("Information Not Available");
+                            else
 
-                            achieveView.setText("Goal: " + day.getDayGoal() +  "  Steps: " + day.getStepsTaken());
-                    }
-            }
+                                achieveView.setText("Goal: " + day.getDayGoal() + "  Steps: " + day.getStepsTaken());
+                        }
+                }
 
-            DisplayMetrics metrics = new DisplayMetrics();
-            ((Activity) view.getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            int screenWidth = metrics.widthPixels;
+                DisplayMetrics metrics = new DisplayMetrics();
+                ((Activity) view.getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+                int screenWidth = metrics.widthPixels;
 
-            if (position == 0) {
-                int radius = screenWidth / 7;
-                int textSize = radius / 4;
-                dailyStatistics.setmRadius(radius);
-                dailyStatistics.setTextSize(textSize);
-                dailyStatistics.setCentertextColor(Color.WHITE);
-                complianceCircle.setmRadius(radius);
-                complianceCircle.setTextSize(textSize);
-                complianceCircle.setCentertextColor(Color.WHITE);
+                if (position == 0) {
+                    int radius = screenWidth / 7;
+                    int textSize = radius / 2;
+                    dailyStatistics.setmRadius(radius);
+                    dailyStatistics.setTextSize(textSize);
+                    dailyStatistics.setCentertextColor(Color.WHITE);
+                    complianceCircle.setmRadius(radius);
+                    complianceCircle.setTextSize(textSize);
+                    complianceCircle.setCentertextColor(Color.WHITE);
 
-            } else {
-                int radius = screenWidth / 11;
-                int textSize = radius / 4;
-                dailyStatistics.setmRadius(radius);
-                complianceCircle.setmRadius(radius);
-                dailyStatistics.setTextSize(textSize);
-                complianceCircle.setTextSize(textSize);
-            }
+                } else {
+                    int radius = screenWidth / 11;
+                    int textSize = radius / 2;
+                    dailyStatistics.setmRadius(radius);
+                    complianceCircle.setmRadius(radius);
+                    dailyStatistics.setTextSize(textSize);
+                    complianceCircle.setTextSize(textSize);
+                }
 
 
-            if (day.getStepsTaken() != 0) {
-                dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
-                dailyStatistics.init();
-                complianceCircle.setArcStartEndAngles(100 - day.getCompliance(), day.getCompliance(), 0, 0, 0);
-                complianceCircle.init();
+                if (day.getStepsTaken() != 0) {
+                    dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
+                    dailyStatistics.init();
+                    complianceCircle.setArcStartEndAngles(100 - day.getCompliance(), 0, 0, 0, day.getCompliance());
+                    complianceCircle.init();
 
-            } else {
+                } else {
 //                dailyStatistics.setArcStartEndAngles(100, 0, 0, 0, 0);
-                dailyStatistics.init();
+                    dailyStatistics.init();
 //                complianceCircle.setArcStartEndAngles(100, 0, 0, 0, 0);
-                complianceCircle.init();
+                    complianceCircle.init();
 
 
-            }
+                }
 
 //            if (remainingView != null) {
 //                if (day.getStepsTaken() != 0)
@@ -147,9 +153,9 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
 ////
 //            dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
 //            dailyStatistics.init();
-            /**
-             * Change images
-             */
+                /**
+                 * Change images
+                 */
 
 //            if (day.getStepsTaken() != 0){
 //                if (day.getGoalAchieved())
@@ -159,8 +165,10 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
 //            }
 //            else
 //                rowImage.setImageResource(R.drawable.confusedman);
+            }
+        } catch (Exception e) {
+            Log.i(StepService.TAG, "exception in weekly adapter " + e.getMessage());
         }
-
         return view;
 
     }

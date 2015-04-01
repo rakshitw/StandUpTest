@@ -6,8 +6,11 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -83,22 +86,27 @@ public class LeaderBoardActivity extends Activity {
                                  Bundle savedInstanceState) {
             context = getActivity();
             rootView = inflater.inflate(R.layout.fragment_leader_board, container, false);
+            try {
 
-            TextView dayView = (TextView) rootView.findViewById(R.id.leaderBoard_day);
-            String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
-            dayView.setText(day);
-            TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
-            SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-            dateView.setText(sf.format(Calendar.getInstance().getTime()));
-            ShowLeaders showLeaders = new ShowLeaders(context);
-            showLeaders.execute();
+                TextView dayView = (TextView) rootView.findViewById(R.id.leaderBoard_day);
+                String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
+                dayView.setText(day);
+                TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
+                SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+                dateView.setText(sf.format(Calendar.getInstance().getTime()));
+                ShowLeaders showLeaders = new ShowLeaders(context);
+                showLeaders.execute();
+            } catch (Exception e) {
+                Log.i("LeaderBoardActivity", "exception in leaderboardActivity " + e.getMessage());
+            }
             return rootView;
         }
 
         public class ShowLeaders extends AsyncTask<Void, Void, String> {
             ArrayList<LeaderBoardModel> leaderBoardModels = new ArrayList<LeaderBoardModel>();
             Context context;
-            public  ShowLeaders(Context context) {
+
+            public ShowLeaders(Context context) {
                 this.context = context;
             }
 
@@ -118,7 +126,9 @@ public class LeaderBoardActivity extends Activity {
 
             @Override
             protected String doInBackground(Void... params) {
-                String response = GetData.getContent(LeaderBoardModel.uri);
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+                int userId = sharedPreferences.getInt("userId", 0);
+                String response = GetData.getContent(LeaderBoardModel.getUrlForLeaderBoard(userId));
 
                 if (!response.equals(PostData.INVALID_RESPONSE) && !response.equals(PostData.EXCEPTION)) {
 
@@ -126,9 +136,12 @@ public class LeaderBoardActivity extends Activity {
 //                        , "authType" : "facebook", "userId" : 4, "authId" : "10203786457483639" },
                     try {
                         JSONArray jsonArray = new JSONArray(response);
-                        for (int i = 0; i < jsonArray.length(); i++){
+                        for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject jsonObject = jsonArray.getJSONObject(i);
                             String name = jsonObject.getString("name");
+                            if (name.contains(" ")) {
+                                name = name.substring(0, name.indexOf(" "));
+                            }
                             int steps = (int) jsonObject.getDouble("avgStepsPerDay");
                             String authType = jsonObject.getString("authType");
                             String authId = jsonObject.getString("authId");
@@ -209,7 +222,6 @@ public class LeaderBoardActivity extends Activity {
             }
         }
     }
-
 
 
 }
