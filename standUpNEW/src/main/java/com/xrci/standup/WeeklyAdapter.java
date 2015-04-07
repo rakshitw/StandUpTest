@@ -32,6 +32,21 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
         super(context, resource, items);
     }
 
+    public static class ViewHolder {
+        DailyStatisticsCircle dailyStatistics;
+        DailyStatisticsCircle complianceCircle;
+        TextView dateView;
+        TextView achieveView;
+
+        public ViewHolder(View view) {
+            dailyStatistics = (DailyStatisticsCircle) view.findViewById(R.id.dailyStatisiticsCircle);
+            complianceCircle = (DailyStatisticsCircle) view.findViewById(R.id.dailyComplianceCircle);
+            dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
+            achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
+
+        }
+    }
+
     @Override
     public int getViewTypeCount() {
         return 2;
@@ -43,40 +58,32 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
 
         View view = convertView;
 
-        if (view == null) {
+        view = getInflatedLayout(position);
+        ViewHolder viewHolder = new ViewHolder(view);
+        view.setTag(viewHolder);
 
-            LayoutInflater viewInflator;
-            viewInflator = LayoutInflater.from(getContext());
-            view = getInflatedLayout(position);
-
-        }
         try {
             DayDetails day = getItem(position);
 
 
             if (day != null) {
-                DailyStatisticsCircle dailyStatistics = (DailyStatisticsCircle) view.findViewById(R.id.dailyStatisiticsCircle);
-                DailyStatisticsCircle complianceCircle = (DailyStatisticsCircle) view.findViewById(R.id.dailyComplianceCircle);
-                TextView dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
-                TextView achieveView = (TextView) view.findViewById(R.id.list_item_achieved_textview);
-//            ImageView rowImage = (ImageView) view.findViewById(R.id.list_item_icon);
                 if (position == 0) {
                     if (day.getStepsTaken() >= 1000) {
                         float displpaySteps = round((float) day.getStepsTaken() / 1000, 1);
-                        dailyStatistics.setCenterText(displpaySteps + "K ");
+                        viewHolder.dailyStatistics.setCenterText(displpaySteps + "K ");
                     } else
-                        dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()));
+                        viewHolder.dailyStatistics.setCenterText(Integer.toString(day.getStepsTaken()));
                 } else if (day.getDayGoal() != 0) {
-                    int goalPercent = ((day.getStepsTaken() * 100) / day.getDayGoal()) ;
-                    dailyStatistics.setCenterText(" " + goalPercent + "%");
+                    int goalPercent = ((day.getStepsTaken() * 100) / day.getDayGoal());
+                    viewHolder.dailyStatistics.setCenterText(" " + goalPercent + "%");
                 }
 
-                if (complianceCircle == null) {
+                if (viewHolder.complianceCircle == null) {
                     Log.i("check", "compliance circle is null");
                 } else
-                    complianceCircle.setCenterText(" " + Integer.toString(day.getCompliance()) + "%");
+                    viewHolder.complianceCircle.setCenterText(" " + Integer.toString(day.getCompliance()) + "%");
 
-                if (dateView != null) {
+                if (viewHolder.dateView != null) {
                     if (day.getDate() != null) {
                         Calendar cal = GregorianCalendar.getInstance();
                         cal.setTime(new Date());
@@ -86,22 +93,22 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
                         String dateString = simpleDateFormat.format(day.getDate());
                         String compareDate = simpleDateFormat.format(dayBeforeDate);
                         if (dateString.compareTo(compareDate) == 0)
-                            dateView.setText("Yesterday");
+                            viewHolder.dateView.setText("Yesterday");
                         else
-                            dateView.setText(dateString);
+                            viewHolder.dateView.setText(dateString);
                     } else
-                        dateView.setText("Week Statistics");
+                        viewHolder.dateView.setText("Week Statistics");
                 }
-                if (achieveView != null) {
+                if (viewHolder.achieveView != null) {
                     if (day.getGoalAchieved() != null)
                         if (day.getGoalAchieved())
-                            achieveView.setText("Goal: " + day.getDayGoal() + " Steps: " + day.getStepsTaken());
+                            viewHolder.achieveView.setText("Goal: " + day.getDayGoal() + " Steps: " + day.getStepsTaken());
                         else {
                             if (day.getStepsTaken() == 0)
-                                achieveView.setText("Information Not Available");
+                                viewHolder.achieveView.setText("Information Not Available");
                             else
 
-                                achieveView.setText("Goal: " + day.getDayGoal() + "  Steps: " + day.getStepsTaken());
+                                viewHolder.achieveView.setText("Goal: " + day.getDayGoal() + "  Steps: " + day.getStepsTaken());
                         }
                 }
 
@@ -112,74 +119,50 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
                 if (position == 0) {
                     int radius = screenWidth / 7;
                     int textSize = radius / 2;
-                    dailyStatistics.setmRadius(radius);
-                    dailyStatistics.setTextSize(textSize);
-                    dailyStatistics.setCentertextColor(Color.WHITE);
-                    complianceCircle.setmRadius(radius);
-                    complianceCircle.setTextSize(textSize);
-                    complianceCircle.setCentertextColor(Color.WHITE);
+                    viewHolder.dailyStatistics.setmRadius(radius);
+                    viewHolder.dailyStatistics.setTextSize(textSize);
+                    viewHolder.dailyStatistics.setCentertextColor(Color.WHITE);
+                    viewHolder.complianceCircle.setmRadius(radius);
+                    viewHolder.complianceCircle.setTextSize(textSize);
+                    viewHolder.complianceCircle.setCentertextColor(Color.WHITE);
 
                 } else {
                     int radius = screenWidth / 11;
                     int textSize = radius / 2;
-                    dailyStatistics.setmRadius(radius);
-                    complianceCircle.setmRadius(radius);
-                    dailyStatistics.setTextSize(textSize);
-                    complianceCircle.setTextSize(textSize);
+                    viewHolder.dailyStatistics.setmRadius(radius);
+                    viewHolder.complianceCircle.setmRadius(radius);
+                    viewHolder.dailyStatistics.setTextSize(textSize);
+                    viewHolder.complianceCircle.setTextSize(textSize);
                 }
 
 
                 if (day.getStepsTaken() != 0) {
-                    dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
-                    dailyStatistics.init();
-                    complianceCircle.setArcStartEndAngles(100 - day.getCompliance(), 0, 0, 0, day.getCompliance());
-                    complianceCircle.init();
+                    viewHolder.dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
+                    viewHolder.dailyStatistics.init();
+                    viewHolder.complianceCircle.setArcStartEndAngles(100 - day.getCompliance(), 0, 0, 0, day.getCompliance());
+                    viewHolder.complianceCircle.init();
 
                 } else {
 //                dailyStatistics.setArcStartEndAngles(100, 0, 0, 0, 0);
-                    dailyStatistics.init();
+                    viewHolder.dailyStatistics.init();
 //                complianceCircle.setArcStartEndAngles(100, 0, 0, 0, 0);
-                    complianceCircle.init();
+                    viewHolder.complianceCircle.init();
 
 
                 }
-
-//            if (remainingView != null) {
-//                if (day.getStepsTaken() != 0)
-//                    remainingView.setText(Integer.toString(day.getStepsRemained()));
-//                else
-//                    remainingView.setText("NA");
-//            }
-////
-//            dailyStatistics.setArcStartEndAngles(day.getStepsRemained(), day.getStepsTaken(), 0, 0, 0);
-//            dailyStatistics.init();
-                /**
-                 * Change images
-                 */
-
-//            if (day.getStepsTaken() != 0){
-//                if (day.getGoalAchieved())
-//                    rowImage.setImageResource(R.drawable.happyman);
-//                else
-//                    rowImage.setImageResource(R.drawable.eldersad);
-//            }
-//            else
-//                rowImage.setImageResource(R.drawable.confusedman);
             }
         } catch (Exception e) {
             Log.i(StepService.TAG, "exception in weekly adapter " + e.getMessage());
         }
         return view;
-
     }
+
 
     private View getInflatedLayout(int position) {
         if (position == 0) {
             return LayoutInflater.from(getContext()).inflate(R.layout.list_item_today, null);
         } else
             return LayoutInflater.from(getContext()).inflate(R.layout.list_item_weekly, null);
-
-
     }
 
     public static float round(float d, int decimalPlace) {
@@ -187,6 +170,4 @@ public class WeeklyAdapter extends ArrayAdapter<DayDetails> {
         bd = bd.setScale(decimalPlace, BigDecimal.ROUND_HALF_UP);
         return bd.floatValue();
     }
-
-
 }

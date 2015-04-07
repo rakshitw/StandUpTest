@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.xrci.standup"
-    android:versionCode="24"
-    android:versionName="1.23" >
+    android:versionCode="30"
+    android:versionName="1.29" >
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -69,7 +69,8 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            />
 
         <service android:name=".ActivityMonitoringService" />
         <service
@@ -96,6 +97,12 @@
         <receiver android:name=".BootCompletedIntentReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".AppUpdatedIntentReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 
@@ -153,7 +160,11 @@
         </activity>
         <activity
             android:name=".FeedbackActivity"
-            android:label="@string/title_activity_feedback" >
+            android:label="Feedback!"  android:parentActivityName=".MainActivity"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.xrci.standup.MainActivity" />
         </activity>
     </application>
 

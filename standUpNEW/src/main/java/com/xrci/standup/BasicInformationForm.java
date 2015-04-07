@@ -87,7 +87,8 @@ public class BasicInformationForm extends Activity {
         String ageString = ageEt.getText().toString();
         String weightString = weightEt.getText().toString();
         String heightString = heightEt.getText().toString();
-
+//        OrganizationModel organizationModel = new OrganizationModel();
+//        ArrayList<String> orgList = organizationModel.getOrgaizationList();
         String emailString = emailEt.getText().toString();
         pattern = Pattern.compile(EMAIL_PATTERN);
         String displayString;
@@ -101,7 +102,7 @@ public class BasicInformationForm extends Activity {
             if (nameString.equals(""))
                 displayString = "Enter your name.";
             else if (organizationString.equals(""))
-                displayString = "Enter your organization name.";
+                displayString = "Select your organization name. Make sure you are connected to internet.";
             else if (ageString.equals(""))
                 displayString = "Enter your age.";
             else if (weightString.equals(""))
@@ -277,7 +278,7 @@ public class BasicInformationForm extends Activity {
             try {
 
                 Spinner dropdown = (Spinner) rootView.findViewById(R.id.organizationList);
-                String[] items = new String[]{"Xerox", "XRCI"};
+                String[] items = new String[]{"XIL", "XRCI"};
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_dropdown_item, items);
                 dropdown.setAdapter(adapter);

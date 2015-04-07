@@ -25,6 +25,15 @@ public class PostActivityDetailsModel {
     private Date valueStartTime;
     private Date valueEndTime;
     private int valueSourceId;
+
+    public Date getValueStartTime() {
+        return valueStartTime;
+    }
+
+    public Date getValueEndTime() {
+        return valueEndTime;
+    }
+
     private int valueUserId;
     private int valueTypeId;
     private int valueSteps;

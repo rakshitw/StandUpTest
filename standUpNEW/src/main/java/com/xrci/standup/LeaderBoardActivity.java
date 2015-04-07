@@ -6,10 +6,12 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.xrci.standup.utility.GetData;
 import com.xrci.standup.utility.LeaderBoardModel;
@@ -26,10 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
 
 
 public class LeaderBoardActivity extends Activity {
@@ -88,12 +86,12 @@ public class LeaderBoardActivity extends Activity {
             rootView = inflater.inflate(R.layout.fragment_leader_board, container, false);
             try {
 
-                TextView dayView = (TextView) rootView.findViewById(R.id.leaderBoard_day);
-                String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
-                dayView.setText(day);
-                TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
-                SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-                dateView.setText(sf.format(Calendar.getInstance().getTime()));
+//                TextView dayView = (TextView) rootView.findViewById(R.id.leaderBoard_day);
+//                String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
+//                dayView.setText(day);
+//                TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
+//                SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+//                dateView.setText(sf.format(Calendar.getInstance().getTime()));
                 ShowLeaders showLeaders = new ShowLeaders(context);
                 showLeaders.execute();
             } catch (Exception e) {
@@ -145,8 +143,19 @@ public class LeaderBoardActivity extends Activity {
                             int steps = (int) jsonObject.getDouble("avgStepsPerDay");
                             String authType = jsonObject.getString("authType");
                             String authId = jsonObject.getString("authId");
-                            LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps);
-                            leaderBoardModels.add(leaderBoardModel);
+                            {
+                                if (jsonObject.has("Compliance")) {
+                                    int compliance = jsonObject.getInt("Compliance");
+                                    Log.i("check", "compliance available leader + compliance = " + compliance);
+                                    LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, compliance);
+                                    leaderBoardModels.add(leaderBoardModel);
+
+                                } else {
+                                    Log.i("check", "compliamce leader  not available");
+                                    LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, 0);
+                                    leaderBoardModels.add(leaderBoardModel);
+                                }
+                            }
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -161,67 +170,73 @@ public class LeaderBoardActivity extends Activity {
             protected void onPostExecute(String response) {
                 super.onPostExecute(response);
                 pd1.dismiss();
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+                try {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
 
-                if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION)) {
+                    if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION)) {
 
-                    alertDialogBuilder.setTitle("Internet Connection Unavailable");
+                        alertDialogBuilder.setTitle("Internet Connection Unavailable");
 
-                    alertDialogBuilder
-                            .setMessage("Check your internet connection and try again.")
-                            .setCancelable(true)
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    // if this button is clicked, just close
-                                    // the dialog box and do nothing
-                                    dialog.cancel();
-                                }
-                            });
+                        alertDialogBuilder
+                                .setMessage("Check your internet connection and try again.")
+                                .setCancelable(true)
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        // if this button is clicked, just close
+                                        // the dialog box and do nothing
 
-                    // create alert dialog
-                    AlertDialog alertDialog = alertDialogBuilder.create();
-                    // show it
-                    alertDialog.show();
+                                        dialog.cancel();
+                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                        NavUtils.navigateUpTo(getActivity(), intent);
+                                    }
+                                });
+
+                        // create alert dialog
+                        AlertDialog alertDialog = alertDialogBuilder.create();
+                        // show it
+                        alertDialog.show();
 
 
-                } else if (response.equals(PostData.INVALID_PAYLOAD)) {
+                    } else if (response.equals(PostData.INVALID_PAYLOAD)) {
 
 
-                    alertDialogBuilder.setTitle("Oops");
+                        alertDialogBuilder.setTitle("Oops");
 
-                    alertDialogBuilder
-                            .setMessage("This is embarrassing . Something went wrong.")
-                            .setCancelable(true)
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    // if this button is clicked, just close
-                                    // the dialog box and do nothing
-                                    dialog.cancel();
-                                }
-                            });
+                        alertDialogBuilder
+                                .setMessage("This is embarrassing . Something went wrong.")
+                                .setCancelable(true)
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        // if this button is clicked, just close
+                                        // the dialog box and do nothing
 
-                    // create alert dialog
-                    AlertDialog alertDialog = alertDialogBuilder.create();
-                    // show it
-                    alertDialog.show();
+                                        dialog.cancel();
+                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                        NavUtils.navigateUpTo(getActivity(), intent);
+                                    }
+                                });
 
-                } else {
-                    if (leaderBoardModels != null && leaderBoardModels.size() > 0) {
-                        ListView mListView = (ListView) rootView.findViewById(R.id.listview_leaderBoard);
+                        // create alert dialog
+                        AlertDialog alertDialog = alertDialogBuilder.create();
+                        // show it
+                        alertDialog.show();
 
-                        LeaderBoardAdapter leaderBoardAdapter = new LeaderBoardAdapter(context
-                                , R.layout.leaderboard_list_item, leaderBoardModels);
+                    } else {
+                        if (leaderBoardModels != null && leaderBoardModels.size() > 0) {
+                            ListView mListView = (ListView) rootView.findViewById(R.id.listview_leaderBoard);
 
-                        mListView.setAdapter(leaderBoardAdapter);
+                            LeaderBoardAdapter leaderBoardAdapter = new LeaderBoardAdapter(context
+                                    , R.layout.leaderboard_list_item, leaderBoardModels);
+
+                            mListView.setAdapter(leaderBoardAdapter);
+                        }
                     }
-
-
+                } catch (Exception e) {
+                    Log.i("check", "Error in LeaderBoardActivity  = " + e.getMessage());
                 }
-
-
             }
         }
     }
-
-
 }

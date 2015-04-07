@@ -43,9 +43,11 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.xrci.standup.utility.PhoneDetailFile;
 import com.xrci.standup.utility.PostActivityDetailsModel;
 import com.xrci.standup.utility.PostNotificationModel;
 
+import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 
 import java.io.BufferedOutputStream;
@@ -131,8 +133,8 @@ public class StepService extends Service implements SensorEventListener {
     private int userId;
     private Date lastNotificationTime = Calendar.getInstance().getTime();
     private long sittingNotificationTime = 40 * 60 * 1000; //40 minutes
-    private long minNotificationGapTime = 10 * 60 * 1000;
-    private boolean goalAchievedNotification = false;
+    private long minNotificationGapTime = 10 * 40 * 1000;
+    private boolean goalAchievedNotification = true;
     private Date lastFusedTime = Calendar.getInstance().getTime();
     private long fuseTimeGap = 8 * 60 * 1000;//    private long noNotificationRange =
     /**
@@ -220,6 +222,9 @@ public class StepService extends Service implements SensorEventListener {
 
         if (mNotificationManager != null)
             mNotificationManager.cancel(1);
+        if (snoozeReceiver != null)
+            unregisterReceiver(snoozeReceiver);
+
 
 //        Log.i("check", "stepservice is destroyed");
         stopSelf();
@@ -314,8 +319,6 @@ public class StepService extends Service implements SensorEventListener {
         start_time = Calendar.getInstance().getTime();
         end_time = Calendar.getInstance().getTime();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        showAlert("service started at " + Calendar.getInstance().getTime());
-        //Set step goal
         setTodayGoal();
         /**
          * To  CircleViews
@@ -444,10 +447,20 @@ public class StepService extends Service implements SensorEventListener {
                     updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
                             , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), true);
                     lastFusedTime = curr_time;
-                } else
+                    try {
+                        Log.i(TAG, "before copy and delete");
+                        copyAndDeleteFile();
+
+                        postFilesInCopyDirectory();
+                    } catch (Exception e) {
+                        Log.i(TAG, "exception error in posting or copying file" + e.getMessage());
+                    }
+                } else {
+//                    showAlertWithButton("yellow");
+                    setTodayGoal();
                     updateActivityUI(DetectedActivity.UNKNOWN, unknownStartTime
                             , curr_time.getTime() - unknownStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
-
+                }
 
 //
 // PostData.postContent()
@@ -498,6 +511,7 @@ public class StepService extends Service implements SensorEventListener {
 
                     if ((curr_time.getTime() - stillStartTime.getTime()) > sittingNotificationTime
                             && (curr_time.getTime() - lastNotificationTime.getTime()) > minNotificationGapTime) {
+
                         long timePeriod = curr_time.getTime() - stillStartTime.getTime();
                         String displayText = "StandUp! You have been " +
                                 "still for " + (int) timePeriod / 60000 + " minutes now";
@@ -512,15 +526,25 @@ public class StepService extends Service implements SensorEventListener {
                 }
 
                 if (curr_time.getTime() - lastFusedTime.getTime() > fuseTimeGap) {
+
                     Log.i(TAG, "doing fusion in unknown");
                     updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
                             - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), true);
 
                     lastFusedTime = curr_time;
-                } else
+                    try {
+                        Log.i(TAG, "before copy and delete");
+                        copyAndDeleteFile();
+
+                        postFilesInCopyDirectory();
+                    } catch (Exception e) {
+                        Log.i(TAG, "error in posting or copying file" + e.getMessage());
+                    }
+                } else {
+                    setTodayGoal();
                     updateActivityUI(DetectedActivity.STILL, stillStartTime, curr_time.getTime()
                             - stillStartTime.getTime(), false, false, 0, false, getTotalStepsToday(0), false);
-
+                }
             }
 
 
@@ -640,9 +664,20 @@ public class StepService extends Service implements SensorEventListener {
 //            if(las)
             updateActivityUI(DetectedActivity.STILL, stillStartTime, 0, true, false, 0, false, getTotalStepsToday(0), false);
             if (end_time.getTime() > start_time.getTime() && start_time.getTime() >= unknownEndTime.getTime() && start_time.getTime() >= stillEndTime.getTime()) {
-
                 //Send to server too
+                Log.i(TAG, "sent steps to server");
+                Log.i(TAG, "end_time = " + end_time + "  start_time = " + start_time);
+                Log.i(TAG, "unknownEndTime = " + unknownEndTime.getTime() );
+                Log.i(TAG, "stillEndTime.getTime() = " +  stillEndTime.getTime());
                 sendActivityDetailToServerFromDB(start_time, end_time, DetectedActivity.ON_FOOT, delta_value);
+            }
+            else {
+
+
+                Log.i(TAG, "did not sent steps to server");
+                Log.i(TAG, "end_time = " + end_time + "  start_time = " + start_time);
+                Log.i(TAG, "unknownEndTime = " + unknownEndTime.getTime() );
+                Log.i(TAG, "stillEndTime.getTime() = " +  stillEndTime.getTime());
             }
             setTotalStepsToday(delta_value);
 
@@ -1095,13 +1130,16 @@ public class StepService extends Service implements SensorEventListener {
 
 
     private void func() {
-        String fname = "xrci_log";
-//        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss", Locale.ENGLISH);
+        String fname = "xrci_standUp_log";
+        SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy");
         File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/XrciVideo2");
+                + "/XrciStandUpFiles");
+        File dirCopy = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/XrciStandUpFilesCopy");
         dir.mkdirs();
+        dirCopy.mkdir();
         String filename = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                "/XrciVideo2/" + fname /*+ "_" + sdf.format(new Date())*/ + ".csv";
+                "/XrciStandUpFiles/" + fname /*+ "_" + sdf.format(new Date())*/ + ".csv";
 //        Log.d(TAG, "Set output file: " + filename);
 
         BufferedOutputStream bos = null;
@@ -1136,9 +1174,9 @@ public class StepService extends Service implements SensorEventListener {
                 battStatus == BatteryManager.BATTERY_STATUS_FULL;
         String charging = isCharging ? "Charging" : "Battery";
 
-        string = " Date : " + new Date().toString() + "," + " position : " +  status + "," + " battery : " + batteryPct + "%" + charging + ","
-                + "brightness : " +  brightness + "," + "ScreenOn: " + isScreenOn + "," + " AmbientLight : "
-                + lux + " lx," + " App : " +  fgApp + "\n";
+        string = " Date : " + new Date().toString() + "," + " position : " + status + "," + " battery : " + batteryPct + "%" + charging + ","
+                + "brightness : " + brightness + "," + "ScreenOn: " + isScreenOn + "," + " AmbientLight : "
+                + lux + " lx," + " App : " + fgApp + "\n";
 
 //        Log.d(TAG, "Writing: " + string);
 
@@ -1241,6 +1279,57 @@ public class StepService extends Service implements SensorEventListener {
     }
 
     /**
+     * Code not visible to user
+     */
+    public void copyAndDeleteFile() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        int userId = sharedPreferences.getInt("userId", 0);
+        SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyyHHmmss");
+
+
+        String fname = "xrci_standUp_log";
+        String filenameOriginal = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                "/XrciStandUpFiles/" + fname + ".csv";
+        String fileNameCopy = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                "/XrciStandUpFilesCopy/" + fname + "_" + userId + "_" + sdf.format(new Date()) + ".csv";
+
+        try {
+            File origFile = new File(filenameOriginal);
+            File copyFile = new File(fileNameCopy);
+            FileUtils.copyFile(origFile, copyFile);
+            origFile.delete();
+        } catch (IOException e) {
+            Log.i(TAG, "File exception in copyanddeleteFile" + e.getMessage());
+        }
+    }
+
+    public void postFilesInCopyDirectory() {
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/XrciStandUpFilesCopy";
+        Log.d("Files", "Path: " + path);
+        File f = new File(path);
+        File file[] = f.listFiles();
+        if (file != null) {
+            Log.i(TAG, "File Size: " + file.length);
+            int numberOfFiles;
+            if (file.length <= 6)
+                numberOfFiles = file.length;
+            else
+                numberOfFiles = 6;
+            for (int i = 0; i < numberOfFiles; i++) {
+                Log.i(TAG, "File in directory FileName:" + file[i].getName() + " path is " + file[i].getAbsolutePath());
+                try {
+
+                    PhoneDetailFile.executeMultipartPost(file[i].getAbsolutePath());
+                } catch (Exception e) {
+                    Log.i(TAG, "exception file not posted in postFilesInCopyDirectory " + e.getMessage());
+                }
+            }
+        }
+    }
+
+
+    /**
      *
      */
 
@@ -1315,18 +1404,12 @@ public class StepService extends Service implements SensorEventListener {
         for (PostActivityDetailsModel postActivityDetailsModel : postActivityDetailsModels) {
             postActivityDetailsModel.getPostActivityJSON(sendActivityArray);
         }
-//
-////        Toast.makeText(getApplicationContext(),"entity length inside send is "
-////                + entityArray.length(),Toast.LENGTH_SHORT).show();
-//        Log.i(TAG, " sendActivityDetailToServerFromDB length inside send " + sendActivityArray.length());
+
         String activityPayload = sendActivityArray.toString();
-//        Log.i(TAG, "sendActivityDetailToServerFromDB  post activity payload is " + activityPayload);
         String result = PostData.postContent(PostActivityDetailsModel.postActivityDetailURI, activityPayload);
-//        Log.i(TAG, "sendActivityDetailToServerFromDB postActivity result is " + result);
         if (result.equals(PostData.INVALID_PAYLOAD)) {
 //            //TODO: get more than just error from server, discarding array for now
             dbHandler.clearPendingServerLog();
-////            entityArray = new JSONArray();
 //
         } else if (result.equals(PostData.INVALID_RESPONSE) || result.equals(PostData.EXCEPTION)) {
 //            //Do nothing
@@ -1390,10 +1473,8 @@ public class StepService extends Service implements SensorEventListener {
         if (fmt.format(storedDate).equals(fmt.format(today))) {
             return preferences.getInt(STEPS, 0) + intermediateStepCount;
         } else {
-//            SharedPreferences.Editor editor = preferences.edit();
-//            editor.putLong(TODAY, today.getTime());
-//
-            return intermediateStepCount;
+            return setTotalStepsToday(0);
+//            return intermediateStepCount;
 //            editor.putInt()
 
 
@@ -1573,7 +1654,7 @@ public class StepService extends Service implements SensorEventListener {
                         .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                         .setContentText(displayText)
                         .setAutoCancel(true)
-                        .addAction(R.drawable.ic_launcher, "Remind me after 40 minutes", snoozeIntent);
+                        .addAction(R.drawable.ic_launcher, "Remind me after 40 minutes", snoozeIntent);                       ;
 
 
         mBuilder.setContentIntent(pIntent);
@@ -1589,6 +1670,7 @@ public class StepService extends Service implements SensorEventListener {
 
                 if ("com.xrci.StandUp.StepService.Later".equals(action)) {
                     minNotificationGapTime = 40 * 60 * 1000;
+                    mNotificationManager.cancel(2);
                 }
             }
 

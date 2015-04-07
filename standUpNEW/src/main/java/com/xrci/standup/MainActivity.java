@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
     private CharSequence mDrawerTitle;
     private CharSequence mTitle;
     private ProfilePictureView profilePictureView;
-    private TextView textViewUserName, textViewPcSyncId;
+    private TextView textViewUserName, textViewPcSyncId, textViewOrg;
     //    private DailyStatisticsCircle dSc;
     static private boolean userIsWorking = false;
     static private Date workingSinceTimeStamp;
@@ -882,6 +882,7 @@ public class MainActivity extends Activity {
         String userName = "", fbid = "";
         try {
             textViewPcSyncId = (TextView) findViewById(R.id.textViewPCSyncId);
+            textViewOrg = (TextView) findViewById(R.id.textViewOrgName);
             textViewUserName = (TextView) findViewById(R.id.textViewUserName);
             profilePictureView = (ProfilePictureView) findViewById(R.id.selection_profile_pic);
             profilePictureView.setCropped(true);
@@ -890,6 +891,7 @@ public class MainActivity extends Activity {
             String email = preferences.getString("registrationEmail", "");
             fbid = preferences.getString("fbid", "");
             userName = preferences.getString("name", "");
+            String org = preferences.getString(BasicInformationForm.registrationOrganization, "Unavailable");
 //            int userId = preferences.getInt("userId", 0);
             boolean withoutFB = preferences.getBoolean("withoutFB", false);
 //            String firstName = userName;
@@ -903,7 +905,9 @@ public class MainActivity extends Activity {
                     profilePictureView.setProfileId(fbid);
                 textViewPcSyncId.setText(email);
             }
-
+            if(!org.isEmpty()) {
+                textViewOrg.setText(org);
+            }
 
         } catch (Exception e) {
             Logger.appendLog("Exception in displayUserDetails(MainActivity):" + e.getMessage(), true);
@@ -1205,4 +1209,11 @@ public class MainActivity extends Activity {
 	
 	*/
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(receiver != null) {
+            stopListeningFromMonitoringService();
+        }
+    }
 }

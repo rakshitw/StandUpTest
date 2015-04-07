@@ -22,74 +22,77 @@ import java.util.List;
  * Created by q4KV89ZB on 23-03-2015.
  */
 public class LeaderBoardAdapter extends ArrayAdapter<LeaderBoardModel> {
+    private static final int VIEW_TYPE_COUNT = 2;
 
     public LeaderBoardAdapter(Context context, int resource, List<LeaderBoardModel> items) {
         super(context, resource, items);
     }
 
+    public static class ViewHolder {
+        ProfilePictureView profilePictureView;
+        TextView nameView;
+        DailyStatisticsCircle dailyStatisticsCircleSteps;
+        DailyStatisticsCircle dailyStatisticsCircleCompliance;
+
+        public ViewHolder(View view) {
+            profilePictureView = (ProfilePictureView) view.findViewById(R.id.leader_profile_pic);
+            nameView = (TextView) view.findViewById(R.id.list_leader_name_textview);
+            dailyStatisticsCircleSteps = (DailyStatisticsCircle) view.findViewById(R.id.StatisiticsStepCircle);
+            dailyStatisticsCircleCompliance = (DailyStatisticsCircle) view.findViewById(R.id.ComplianceCircle);
+
+        }
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        View view = convertView;
+        LayoutInflater viewInflator;
+        viewInflator = LayoutInflater.from(getContext());
+        view = getInflatedLayout(position);
+        ViewHolder viewHolder = new ViewHolder(view);
+        view.setTag(viewHolder);
 
-
-            View view = convertView;
-
-            if (view == null) {
-
-                LayoutInflater viewInflator;
-                viewInflator = LayoutInflater.from(getContext());
-                view = getInflatedLayout(position);
-
-            }
         try {
             LeaderBoardModel leaderBoardModel = getItem(position);
 
             if (leaderBoardModel != null) {
                 if (leaderBoardModel.getAuthType().equalsIgnoreCase("facebook")) {
                     if (position != 0) {
-                        ProfilePictureView profilePictureView = (ProfilePictureView) view.findViewById(R.id.leader_profile_pic);
-                        profilePictureView.setCropped(true);
-                        profilePictureView.setProfileId(leaderBoardModel.getAuthId());
+                        viewHolder.profilePictureView.setCropped(true);
+                        viewHolder.profilePictureView.setProfileId(leaderBoardModel.getAuthId());
                     }
 
                 }
                 if (position != 0) {
-                    TextView nameView = (TextView) view.findViewById(R.id.list_leader_name_textview);
-                    nameView.setText(leaderBoardModel.getName());
+                    viewHolder.nameView.setText(leaderBoardModel.getName());
                 }
-//            TextView stepView = (TextView) view.findViewById(R.id.list_item_steps_textview);
-                DailyStatisticsCircle dailyStatisticsCircleSteps = (DailyStatisticsCircle) view.findViewById(R.id.StatisiticsStepCircle);
-                DailyStatisticsCircle dailyStatisticsCircleCompliance = (DailyStatisticsCircle) view.findViewById(R.id.ComplianceCircle);
-
                 int steps = leaderBoardModel.getSteps();
                 if (steps >= 1000) {
 
-                    dailyStatisticsCircleSteps.setCenterText(round((float) leaderBoardModel.getSteps() / 1000, 1) + "K");
+                    viewHolder.dailyStatisticsCircleSteps.setCenterText(round((float) leaderBoardModel.getSteps() / 1000, 1) + "K");
                 } else
-                    dailyStatisticsCircleSteps.setCenterText(Integer.toString(leaderBoardModel.getSteps()));
-
+                    viewHolder.dailyStatisticsCircleSteps.setCenterText(Integer.toString(leaderBoardModel.getSteps()));
+                viewHolder.dailyStatisticsCircleCompliance.setCenterText(" " + Integer.toString(leaderBoardModel.getCompliance()) + "%");
                 DisplayMetrics metrics = new DisplayMetrics();
                 ((Activity) view.getContext()).getWindowManager().getDefaultDisplay().getMetrics(metrics);
                 int screenWidth = metrics.widthPixels;
                 int radius;
                 if (position == 0) {
                     radius = screenWidth / 7;
-                    dailyStatisticsCircleSteps.setCentertextColor(Color.WHITE);
-                    dailyStatisticsCircleCompliance.setCentertextColor(Color.WHITE);
+                    viewHolder.dailyStatisticsCircleSteps.setCentertextColor(Color.WHITE);
+                    viewHolder.dailyStatisticsCircleCompliance.setCentertextColor(Color.WHITE);
 
                 } else
                     radius = screenWidth / 11;
                 int textSize = radius / 2;
-                //            dailyStatisticsCircleSteps.setmRadius(radius);
-
-                dailyStatisticsCircleSteps.setmRadius(radius);
-                dailyStatisticsCircleSteps.setTextSize(textSize);
-                dailyStatisticsCircleSteps.setArcStartEndAngles(0, 100, 0, 0, 0);
-                dailyStatisticsCircleSteps.init();
-                dailyStatisticsCircleCompliance.setmRadius(radius);
-                dailyStatisticsCircleCompliance.setTextSize(textSize);
-                dailyStatisticsCircleCompliance.setArcStartEndAngles(100, 0, 0, 0, 0);
-                dailyStatisticsCircleCompliance.setCenterText("0%");
-                dailyStatisticsCircleCompliance.init();
+                viewHolder.dailyStatisticsCircleSteps.setmRadius(radius);
+                viewHolder.dailyStatisticsCircleSteps.setTextSize(textSize);
+                viewHolder.dailyStatisticsCircleSteps.setArcStartEndAngles(0, 100, 0, 0, 0);
+                viewHolder.dailyStatisticsCircleSteps.init();
+                viewHolder.dailyStatisticsCircleCompliance.setmRadius(radius);
+                viewHolder.dailyStatisticsCircleCompliance.setTextSize(textSize);
+                viewHolder.dailyStatisticsCircleCompliance.setArcStartEndAngles(100 - leaderBoardModel.getCompliance(), 0, 0, 0, leaderBoardModel.getCompliance());
+                viewHolder.dailyStatisticsCircleCompliance.init();
 
             }
         } catch (Exception e) {
@@ -113,5 +116,10 @@ public class LeaderBoardAdapter extends ArrayAdapter<LeaderBoardModel> {
             return LayoutInflater.from(getContext()).inflate(R.layout.leaderboard_list_item, null);
 
 
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return VIEW_TYPE_COUNT;
     }
 }

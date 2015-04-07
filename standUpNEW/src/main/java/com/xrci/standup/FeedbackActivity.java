@@ -6,10 +6,12 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.RatingBar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,13 +56,13 @@ public class FeedbackActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -83,9 +86,11 @@ public class FeedbackActivity extends Activity {
 
     public void onSendFeedback(View view) {
         EditText editText = (EditText) findViewById(R.id.textFeedback);
+        RatingBar ratingBar = (RatingBar) findViewById(R.id.ratingBar);
+        String rating = String.valueOf(ratingBar.getRating());
         String feedback = editText.getText().toString();
         SendFeedBack sendFeedBack = new SendFeedBack(this);
-        sendFeedBack.execute(feedback);
+        sendFeedBack.execute(feedback, rating);
 
     }
 
@@ -111,6 +116,7 @@ public class FeedbackActivity extends Activity {
 
         @Override
         protected String doInBackground(String... params) {
+            String url = "http://64.49.234.131:8080/standup/rest/feedback/postDetails";
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
             int userId = sharedPreferences.getInt("userId", 0);
             Log.i("check", "string is blah ");
@@ -125,11 +131,12 @@ public class FeedbackActivity extends Activity {
                     jsonObject.put("userId", userId);
                     jsonObject.put("comment", params[0]);
                     jsonObject.put("time", simpleDateFormat.format(date) );
+                    jsonObject.put("rating", params[1]);
                     jsonArray.put(jsonObject);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                String response = PostData.postContent("url",jsonArray.toString() );
+                String response = PostData.postContent(url,jsonArray.toString() );
                 return  response;
             }
             else
@@ -155,6 +162,9 @@ public class FeedbackActivity extends Activity {
                                 // if this button is clicked, just close
                                 // the dialog box and do nothing
                                 dialog.cancel();
+                                Intent intent = NavUtils.getParentActivityIntent(FeedbackActivity.this);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                NavUtils.navigateUpTo(FeedbackActivity.this, intent);
                             }
                         });
 
@@ -195,6 +205,27 @@ public class FeedbackActivity extends Activity {
                                 // if this button is clicked, just close
                                 // the dialog box and do nothing
                                 dialog.cancel();
+                            }
+                        });
+
+                // create alert dialog
+                AlertDialog alertDialog = alertDialogBuilder.create();
+                // show it
+                alertDialog.show();
+            } else {
+                alertDialogBuilder.setTitle("Feedback sent");
+
+                alertDialogBuilder
+                        .setMessage("Thank you!")
+                        .setCancelable(true)
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // if this button is clicked, just close
+                                // the dialog box and do nothing
+                                dialog.cancel();
+                                Intent intent = NavUtils.getParentActivityIntent(FeedbackActivity.this);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                                NavUtils.navigateUpTo(FeedbackActivity.this, intent);
                             }
                         });
 

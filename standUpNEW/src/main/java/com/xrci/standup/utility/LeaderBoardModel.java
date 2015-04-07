@@ -27,15 +27,22 @@ public class LeaderBoardModel {
     private String name;
     private int steps;
 
-    public LeaderBoardModel(String authId, String authType, String name, int steps) {
+    public int getCompliance() {
+        return compliance;
+    }
+
+    private int compliance;
+
+    public LeaderBoardModel(String authId, String authType, String name, int steps, int compliance) {
         this.authId = authId;
         this.authType = authType;
         this.name = name;
         this.steps = steps;
+        this.compliance = compliance;
     }
 
     public static String getUrlForLeaderBoard(int userId) {
-        return uri + "/" + userId;
+        return uri + "/" + userId + "/10" ;
     }
 
 
