@@ -6,12 +6,10 @@ import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,7 +25,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 
 public class LeaderBoardActivity extends Activity {
@@ -58,12 +58,12 @@ public class LeaderBoardActivity extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -83,16 +83,11 @@ public class LeaderBoardActivity extends Activity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             context = getActivity();
+
             rootView = inflater.inflate(R.layout.fragment_leader_board, container, false);
             try {
 
-//                TextView dayView = (TextView) rootView.findViewById(R.id.leaderBoard_day);
-//                String day = Calendar.getInstance().getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault());
-//                dayView.setText(day);
-//                TextView dateView = (TextView) rootView.findViewById(R.id.leaderBoard_date);
-//                SimpleDateFormat sf = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-//                dateView.setText(sf.format(Calendar.getInstance().getTime()));
-                ShowLeaders showLeaders = new ShowLeaders(context);
+                ShowLeaders showLeaders = new ShowLeaders(getActivity(), getActivity().getApplicationContext());
                 showLeaders.execute();
             } catch (Exception e) {
                 Log.i("LeaderBoardActivity", "exception in leaderboardActivity " + e.getMessage());
@@ -102,29 +97,50 @@ public class LeaderBoardActivity extends Activity {
 
         public class ShowLeaders extends AsyncTask<Void, Void, String> {
             ArrayList<LeaderBoardModel> leaderBoardModels = new ArrayList<LeaderBoardModel>();
-            Context context;
+            Context activityContext;
+            Context applicationContext;
+            DatabaseHandler databaseHandler;
+            ListView mListView = (ListView) rootView.findViewById(R.id.listview_leaderBoard);
+            LeaderBoardAdapter leaderBoardAdapter;
 
-            public ShowLeaders(Context context) {
-                this.context = context;
+            public ShowLeaders(Context activityContext, Context applicationContext) {
+                this.activityContext = activityContext;
+                this.applicationContext = applicationContext;
+                databaseHandler = new DatabaseHandler(applicationContext);
             }
 
             @Override
             protected void onPreExecute() {
+
                 super.onPreExecute();
-                pd1 = new ProgressDialog(context);
+                ArrayList<LeaderBoardModel> leaderModelsDb = databaseHandler.getLeaderBoardModelFromDB();
+                Log.i("LEADERBOARD", "leader from db length is " + leaderModelsDb.size());
+                leaderBoardAdapter = new LeaderBoardAdapter(activityContext
+                        , R.layout.leaderboard_list_item, leaderModelsDb);
+                mListView.setAdapter(leaderBoardAdapter);
+                pd1 = new ProgressDialog(activityContext);
                 pd1.setTitle("Fetching leaders");
 
                 pd1.setMessage("Getting data");
                 pd1.setCancelable(false);
                 pd1.setIndeterminate(true);
                 pd1.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                pd1.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+//                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
+//                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//                        NavUtils.navigateUpTo(getActivity(), intent);
+                    }
+                });
                 pd1.show();
 
             }
 
             @Override
             protected String doInBackground(Void... params) {
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
                 int userId = sharedPreferences.getInt("userId", 0);
                 String response = GetData.getContent(LeaderBoardModel.getUrlForLeaderBoard(userId));
 
@@ -140,22 +156,22 @@ public class LeaderBoardActivity extends Activity {
                             if (name.contains(" ")) {
                                 name = name.substring(0, name.indexOf(" "));
                             }
-                            int steps = (int) jsonObject.getDouble("avgStepsPerDay");
+                            int steps;
+                            if (jsonObject.isNull("avgStepsPerDay")) {
+                                steps = 0;
+                            } else {
+                                steps = (int) jsonObject.getDouble("avgStepsPerDay");
+                            }
                             String authType = jsonObject.getString("authType");
                             String authId = jsonObject.getString("authId");
-                            {
-                                if (jsonObject.has("Compliance")) {
-                                    int compliance = jsonObject.getInt("Compliance");
-                                    Log.i("check", "compliance available leader + compliance = " + compliance);
-                                    LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, compliance);
-                                    leaderBoardModels.add(leaderBoardModel);
+                            int compliance;
+                            if (jsonObject.isNull("Compliance")) {
+                                compliance = 0;
+                            } else
+                                compliance = jsonObject.getInt("Compliance");
+                            LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, compliance);
+                            leaderBoardModels.add(leaderBoardModel);
 
-                                } else {
-                                    Log.i("check", "compliamce leader  not available");
-                                    LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, 0);
-                                    leaderBoardModels.add(leaderBoardModel);
-                                }
-                            }
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -171,14 +187,16 @@ public class LeaderBoardActivity extends Activity {
                 super.onPostExecute(response);
                 pd1.dismiss();
                 try {
-                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(activityContext);
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
+                    String lastUpdate = sharedPreferences.getString("last_updated", "unknown time");
 
                     if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION)) {
 
                         alertDialogBuilder.setTitle("Internet Connection Unavailable");
 
                         alertDialogBuilder
-                                .setMessage("Check your internet connection and try again.")
+                                .setMessage("Check your internet connection and try again. Leaderboard last updated at " + lastUpdate + ".")
                                 .setCancelable(true)
                                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
@@ -186,9 +204,9 @@ public class LeaderBoardActivity extends Activity {
                                         // the dialog box and do nothing
 
                                         dialog.cancel();
-                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
-                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                        NavUtils.navigateUpTo(getActivity(), intent);
+//                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
+//                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//                                        NavUtils.navigateUpTo(getActivity(), intent);
                                     }
                                 });
 
@@ -204,7 +222,7 @@ public class LeaderBoardActivity extends Activity {
                         alertDialogBuilder.setTitle("Oops");
 
                         alertDialogBuilder
-                                .setMessage("This is embarrassing . Something went wrong.")
+                                .setMessage("This is embarrassing . Something went wrong. Leaderboard last updated at" + lastUpdate + ".")
                                 .setCancelable(true)
                                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
@@ -212,9 +230,9 @@ public class LeaderBoardActivity extends Activity {
                                         // the dialog box and do nothing
 
                                         dialog.cancel();
-                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
-                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                        NavUtils.navigateUpTo(getActivity(), intent);
+//                                        Intent intent = NavUtils.getParentActivityIntent(getActivity());
+//                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//                                        NavUtils.navigateUpTo(getActivity(), intent);
                                     }
                                 });
 
@@ -224,15 +242,30 @@ public class LeaderBoardActivity extends Activity {
                         alertDialog.show();
 
                     } else {
+                        Log.i("Leaderboard", "leaderboard model size is" + leaderBoardModels.size());
                         if (leaderBoardModels != null && leaderBoardModels.size() > 0) {
-                            ListView mListView = (ListView) rootView.findViewById(R.id.listview_leaderBoard);
+                            databaseHandler.clearLeaderBoard();
+                            leaderBoardAdapter.clear();
+                            int i = 0;
+                            for (LeaderBoardModel leaderBoardModel : leaderBoardModels) {
+                                databaseHandler.addLeaderBoardRow(leaderBoardModel);
+                                leaderBoardAdapter.insert(leaderBoardModel, i);
+                                i++;
+                            }
 
-                            LeaderBoardAdapter leaderBoardAdapter = new LeaderBoardAdapter(context
-                                    , R.layout.leaderboard_list_item, leaderBoardModels);
-
-                            mListView.setAdapter(leaderBoardAdapter);
+//                            LeaderBoardAdapter leaderBoardAdapter = new LeaderBoardAdapter(context
+//                                    , R.layout.leaderboard_list_item, leaderBoardModels);
+                            leaderBoardAdapter.notifyDataSetChanged();
+//                            mListView.setAdapter(leaderBoardAdapter);
+//                            SharedPreferences sharedPreferences2 = PreferenceManager.getDefaultSharedPreferences(applicationContext);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy, HH:mm");
+                            Log.i("check", "update date is " + sdf.format(Calendar.getInstance().getTime()));
+                            editor.putString("last_updated", sdf.format(Calendar.getInstance().getTime()));
+                            editor.commit();
                         }
                     }
+                    databaseHandler.close();
                 } catch (Exception e) {
                     Log.i("check", "Error in LeaderBoardActivity  = " + e.getMessage());
                 }

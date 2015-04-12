@@ -10,43 +10,54 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.xrci.standup.FeedbackActivity$PlaceholderFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:text="We would love to hear back from you."
-        android:textColor="@color/white"
-        android:textSize="25sp" />
-
-
-    <RatingBar
-        android:id="@+id/ratingBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:numStars="5"
-        android:rating="3.0"
-        android:stepSize="1.0" />
-
-    <EditText
-        android:id="@+id/textFeedback"
-        android:layout_width="fill_parent"
-        android:layout_height="200dp"
-        android:layout_margin="20dp"
-        android:background="@color/material_blue_grey_800"
-        android:gravity="top|left"
-        android:lines="40"
-        android:textColor="@color/white"
-        android:textSize="20sp"/>
-
-    <Button
-        android:id="@+id/buttonFeedback"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_margin="20dp"
-        android:onClick="onSendFeedback"
-        android:text="SEND"
-        android:gravity="center"
-        android:textColor="@color/white"
-        android:textSize="20sp"/>
+        android:layout_height="wrap_content">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:text="We would love to hear back from you."
+                android:textColor="@color/white"
+                android:textSize="25sp" />
+
+
+            <RatingBar
+                android:id="@+id/ratingBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:numStars="5"
+                android:rating="3.0"
+                android:stepSize="1.0" />
+
+            <EditText
+                android:id="@+id/textFeedback"
+                android:layout_width="fill_parent"
+                android:layout_height="200dp"
+                android:layout_margin="20dp"
+                android:background="@color/material_blue_grey_800"
+                android:gravity="top|left"
+                android:lines="40"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/buttonFeedback"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_margin="20dp"
+                android:gravity="center"
+                android:onClick="onSendFeedback"
+                android:text="SEND"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

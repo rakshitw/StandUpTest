@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.xrci.standup.utility.LeaderBoardModel;
 import com.xrci.standup.utility.NotificationModel;
 import com.xrci.standup.utility.PostActivityDetailsModel;
 
@@ -28,12 +29,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 10;
+    private final static int DB_VERSION = 11;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
     private static final String TABLE_NOTIFICATION_ACTIVITY_LOG = "tbl_notification_log";
     private static final String TABLE_GOAL_LOG = "tbl_goal_log";
+    private static final String TABLE_LEADERBOARD_LOG = "tbl_leaderboard_log";
     private static final String TABLE_COMPLIANCE_LOG = "tbl_compliance_log";
     private static final String TABLE_NOTIFICATION_RECORD = "tbl_notification_record";
     private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
@@ -63,6 +65,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String DISCARDED = "discarded";
     private static final String SITTINGTIME = "sittingtime";
     private static final String MAXSITTINGTIME = "maxsittingtime";
+
+    //LeaderBoard
+    private static final String AUTH_ID = "authId";
+    private static final String AUTH_TYPE = "authType";
+    private static  final  String NAME = "name";
+    private static  final String STEPS = "steps";
+    private static final String COMPLIANCE = "compliance";
+
+
+    private static String CREATE_LEADERBOARD_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_LEADERBOARD_LOG + "("
+            + ROWID + " INTEGER PRIMARY KEY,"
+            + AUTH_ID + " TEXT," + AUTH_TYPE + " TEXT," + NAME + " TEXT," + COMPLIANCE + " INTEGER,"+ STEPS +  " INTEGER)";
+
     private static String CREATE_GOAL_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_GOAL_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY,"
             + KEY_DAY_DATE + " TEXT," + KEY_GOAL + " INTEGER)";
@@ -121,6 +136,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(CREATE_FUSED_LOG_TABLE);
 
             db.execSQL(CREATE_COMPLIANCE_TABLE);
+            db.execSQL(CREATE_LEADERBOARD_TABLE);
             //db.close();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -149,6 +165,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL(CREATE_NOTIFICATION_RECORD_TABLE);
         db.execSQL(CREATE_COMPLIANCE_TABLE);
         db.execSQL(CREATE_PENDING_SERVER_TABLE);
+        db.execSQL(CREATE_LEADERBOARD_TABLE);
 
 
     }
@@ -216,6 +233,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addLeaderBoardRow (LeaderBoardModel leaderBoardModel) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(AUTH_ID, leaderBoardModel.getAuthId());
+        contentValues.put(AUTH_TYPE, leaderBoardModel.getAuthType());
+        contentValues.put(NAME, leaderBoardModel.getName());
+        contentValues.put(COMPLIANCE, leaderBoardModel.getCompliance());
+        contentValues.put(STEPS, leaderBoardModel.getSteps());
+        long rowinserted = db.insert(TABLE_LEADERBOARD_LOG, null, contentValues);
+        db.close();
+    }
+
     public void addPendingServerActivity(Date activityStartTime, Date activityEndTime,int typeId,int steps) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SQLiteDatabase db = this.getWritableDatabase();
@@ -272,6 +302,44 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
         return postActivityDetailsModels;
     }
+
+    public ArrayList<LeaderBoardModel> getLeaderBoardModelFromDB(){
+        SQLiteDatabase db = this.getReadableDatabase();
+//         KEY_ACTIVITY + " INTEGER,"
+//        + KEY_START + " TEXT," + KEY_END + " TEXT," + NO_OF_STEPS + " INTEGER
+        String[] columns = {AUTH_TYPE, AUTH_ID, NAME, COMPLIANCE, STEPS };
+
+        Cursor cursor = db.query(TABLE_LEADERBOARD_LOG, columns, null,null,null, null, null);
+//        Log.i("check", "querying cursor size " +  cursor.getCount() );
+
+
+        ArrayList<LeaderBoardModel> leaderBoardModels = new ArrayList<LeaderBoardModel>();
+        int authTypeIndex = cursor.getColumnIndex(AUTH_TYPE);
+        int authIdIndex = cursor.getColumnIndex(AUTH_ID);
+        int nameIndex = cursor.getColumnIndex(NAME);
+        int complianceIndex = cursor.getColumnIndex(COMPLIANCE);
+        int stepsIndex = cursor.getColumnIndex(STEPS);
+
+        while (cursor.moveToNext()) {
+            try {
+                String authType = cursor.getString(authTypeIndex);
+                String authId = cursor.getString(authIdIndex);
+                String name = cursor.getString(nameIndex);
+                Log.i("check", "name is " + name);
+                int compliance = cursor.getInt(complianceIndex);
+                int steps = cursor.getInt(stepsIndex);
+                LeaderBoardModel leaderBoardModel = new LeaderBoardModel(authId, authType, name, steps, compliance);
+                leaderBoardModels.add(leaderBoardModel);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+        cursor.close();
+        db.close();
+        return leaderBoardModels;
+    }
+
 
     public void clearFusedUserActivity(Date date) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -364,6 +432,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.rawQuery("DELETE FROM " + TABLE_COMPLIANCE_LOG, null).moveToFirst();
         db.close();
     }
+
+    public void clearLeaderBoard() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        db.rawQuery("DELETE FROM " + TABLE_LEADERBOARD_LOG, null).moveToFirst();
+        db.close();
+    }
+
+
 
 
     public void setTableNotificationActivityRecords(String message, int activity, Date date) {

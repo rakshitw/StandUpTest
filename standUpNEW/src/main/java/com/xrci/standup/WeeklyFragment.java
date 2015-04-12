@@ -198,7 +198,6 @@ public class WeeklyFragment extends Fragment {
                     results[i] = Integer.parseInt(items[i]);
                 } catch (NumberFormatException nfe) {
                 }
-                ;
             }
             return results;
         }

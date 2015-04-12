@@ -3,9 +3,12 @@ package com.xrci.standup;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -66,11 +69,8 @@ public class BasicInformationForm extends Activity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         EditText nameEt = (EditText) findViewById(R.id.nameText);
 //        EditText organizationEt = (EditText) findViewById(R.id.organizationText);
-        Spinner organizationList = (Spinner)findViewById(R.id.organizationList);
+        Spinner organizationList = (Spinner) findViewById(R.id.organizationList);
 //        organizationList.setOnItemSelectedListener(BasicInformationForm.this);
-
-
-
 
 
         EditText emailEt = (EditText) findViewById(R.id.emailText);
@@ -140,7 +140,6 @@ public class BasicInformationForm extends Activity {
 
         } else {
 
-//            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(registrationName, nameString);
             editor.putString(registrationAge, ageString);
@@ -148,10 +147,17 @@ public class BasicInformationForm extends Activity {
             editor.putString(registrationHeight, heightString);
             editor.putString(registrationEmail, emailString);
             editor.putString(registrationOrganization, organizationString);
-            if (sexRbFemale.isChecked())
+            String sex;
+            if (sexRbFemale.isChecked()) {
+                sex = "F";
+                Log.i("basicInfo", "female selected");
                 editor.putString(registrationSex, "F");
-            else
+            }
+            else {
+                sex = "M";
+                Log.i("basicInfo", "male selected");
                 editor.putString(registrationSex, "M");
+            }
             editor.putBoolean(registrationFormFilled, true);
 
             editor.commit();
@@ -159,66 +165,181 @@ public class BasicInformationForm extends Activity {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String fbid = preferences.getString("fbid", "1");
             SharedPreferences.Editor editor_userId = preferences.edit();
+
             AuthenticationModel authModel = new AuthenticationModel(nameString
-                    , emailString, "facebook", fbid, Calendar.getInstance().getTime(), "M", organizationString, ageString, weightString, heightString);
-            String response = authModel.verifyAuthentication();
-            Log.i("check", "authentication response is " + response);
+                    , emailString, "facebook", fbid, Calendar.getInstance().getTime(), sex , organizationString, ageString, weightString, heightString);
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+            RegisterUser registerUser = new RegisterUser(BasicInformationForm.this, getApplicationContext());
+            registerUser.execute(authModel);
+//            String response = authModel.verifyAuthentication();
+//            Log.i("check", "authentication response is " + response);
 
 
-            if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION) ) {
+//            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+//                    this);
+//
+//
+//            if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION) ) {
+//
+//                alertDialogBuilder.setTitle("Internet Connection Unavailable");
+//
+//                alertDialogBuilder
+//                        .setMessage("Check your internet connection and try again.")
+//                        .setCancelable(true)
+//                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                // if this button is clicked, just close
+//                                // the dialog box and do nothing
+//                                dialog.cancel();
+//                            }
+//                        });
+//
+//                // create alert dialog
+//                AlertDialog alertDialog = alertDialogBuilder.create();
+//                // show it
+//                alertDialog.show();
+//
+//
+//            } else if (response.equals(PostData.INVALID_PAYLOAD)) {
+//
+//
+//                alertDialogBuilder.setTitle("Oops");
+//
+//                alertDialogBuilder
+//                        .setMessage("This is embarrassing . Something went wrong.")
+//                        .setCancelable(true)
+//                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                // if this button is clicked, just close
+//                                // the dialog box and do nothing
+//                                dialog.cancel();
+//                            }
+//                        });
+//
+//                // create alert dialog
+//                AlertDialog alertDialog = alertDialogBuilder.create();
+//                // show it
+//                alertDialog.show();
+//
+//            } else{
+//                editor_userId.putInt("userId", setUserId(response));
+//                editor_userId.commit();
+//
+//                finish();
+//                Intent intent = new Intent(this, MainActivity.class);
+//                startActivity(intent);
+//            }
+//
+        }
 
-                alertDialogBuilder.setTitle("Internet Connection Unavailable");
+    }
 
-                alertDialogBuilder
-                        .setMessage("Check your internet connection and try again.")
-                        .setCancelable(true)
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // if this button is clicked, just close
-                                // the dialog box and do nothing
-                                dialog.cancel();
-                            }
-                        });
+    public class RegisterUser extends AsyncTask<AuthenticationModel, Void, String> {
+        Context activityContext;
+        Context applicationContext;
+        private ProgressDialog pd1;
 
-                // create alert dialog
-                AlertDialog alertDialog = alertDialogBuilder.create();
-                // show it
-                alertDialog.show();
+        public RegisterUser(Context activityContext, Context applicationContext) {
+            this.activityContext = activityContext;
+            this.applicationContext = applicationContext;
 
+        }
+
+        @Override
+        protected void onPreExecute() {
+            try {
+                pd1 = new ProgressDialog(activityContext);
+                pd1.setTitle("Registeration");
+
+                pd1.setMessage("Registering User");
+                pd1.setCancelable(false);
+                pd1.setIndeterminate(true);
+                pd1.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                pd1.show();
+            } catch (Exception e) {
+
+            }
+        }
+
+        @Override
+        protected String doInBackground(AuthenticationModel... authenticationModels) {
+
+            String response = authenticationModels[0].verifyAuthentication();
+            return response;
+        }
+
+        @Override
+        protected void onPostExecute(String response) {
+            try {
+                pd1.dismiss();
+            } catch (Exception e) {
+
+            }
+
+
+            if (response.equals(PostData.INVALID_RESPONSE) || response.equals(PostData.EXCEPTION)) {
+                try {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                            activityContext);
+
+                    alertDialogBuilder.setTitle("Internet Connection Unavailable");
+
+                    alertDialogBuilder
+                            .setMessage("Check your internet connection and try again.")
+                            .setCancelable(true)
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // if this button is clicked, just close
+                                    // the dialog box and do nothing
+                                    dialog.cancel();
+                                }
+                            });
+
+                    // create alert dialog
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    // show it
+                    alertDialog.show();
+                } catch (Exception e) {
+
+                }
 
             } else if (response.equals(PostData.INVALID_PAYLOAD)) {
+                try {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                            activityContext);
 
+                    alertDialogBuilder.setTitle("Oops");
 
-                alertDialogBuilder.setTitle("Oops");
+                    alertDialogBuilder
+                            .setMessage("This is embarrassing . Something went wrong.")
+                            .setCancelable(true)
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // if this button is clicked, just close
+                                    // the dialog box and do nothing
+                                    dialog.cancel();
+                                }
+                            });
 
-                alertDialogBuilder
-                        .setMessage("This is embarrassing . Something went wrong.")
-                        .setCancelable(true)
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                // if this button is clicked, just close
-                                // the dialog box and do nothing
-                                dialog.cancel();
-                            }
-                        });
+                    // create alert dialog
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+                    // show it
+                    alertDialog.show();
+                } catch (Exception e) {
 
-                // create alert dialog
-                AlertDialog alertDialog = alertDialogBuilder.create();
-                // show it
-                alertDialog.show();
+                }
 
-            } else{
+            } else {
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
+//                String fbid = preferences.getString("fbid", "1");
+                SharedPreferences.Editor editor_userId = preferences.edit();
                 editor_userId.putInt("userId", setUserId(response));
                 editor_userId.commit();
 
                 finish();
-                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(applicationContext, MainActivity.class);
                 startActivity(intent);
             }
-
         }
 
     }
@@ -232,10 +353,6 @@ public class BasicInformationForm extends Activity {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-
-
-
-
     }
 
 
@@ -319,7 +436,7 @@ public class BasicInformationForm extends Activity {
                 } else if (sharedPreferences.getString(registrationSex, "") == "F")
                     sexRbFemale.setChecked(true);
             } catch (Exception e) {
-                Log.i("BasicInformationForm", "Exception in BasicInformationForm " +  e.getMessage());
+                Log.i("BasicInformationForm", "Exception in BasicInformationForm " + e.getMessage());
             }
             return rootView;
         }

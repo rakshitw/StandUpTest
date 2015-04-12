@@ -61,7 +61,6 @@ public class LeaderBoardAdapter extends ArrayAdapter<LeaderBoardModel> {
                         viewHolder.profilePictureView.setCropped(true);
                         viewHolder.profilePictureView.setProfileId(leaderBoardModel.getAuthId());
                     }
-
                 }
                 if (position != 0) {
                     viewHolder.nameView.setText(leaderBoardModel.getName());
