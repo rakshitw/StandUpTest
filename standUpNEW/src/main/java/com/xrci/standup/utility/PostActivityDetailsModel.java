@@ -35,6 +35,15 @@ public class PostActivityDetailsModel {
     }
 
     private int valueUserId;
+
+    public int getValueTypeId() {
+        return valueTypeId;
+    }
+
+    public int getValueSteps() {
+        return valueSteps;
+    }
+
     private int valueTypeId;
     private int valueSteps;
 

@@ -103,7 +103,7 @@ public class FusedDataModel {
 
 
 
-    public static void parseAndStoreDateForMainTimeline(JSONObject jsonObject, DatabaseHandler dbHandler){
+    public static void parseAndStoreDateForMainTimeline(JSONObject jsonObject , DatabaseHandler dbHandler){
         try {
 
             String endTimeString =  jsonObject.getString("endTime");

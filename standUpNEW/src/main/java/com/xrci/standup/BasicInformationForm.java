@@ -249,7 +249,7 @@ public class BasicInformationForm extends Activity {
         protected void onPreExecute() {
             try {
                 pd1 = new ProgressDialog(activityContext);
-                pd1.setTitle("Registeration");
+                pd1.setTitle("Registration");
 
                 pd1.setMessage("Registering User");
                 pd1.setCancelable(false);

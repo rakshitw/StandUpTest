@@ -10,6 +10,7 @@ import android.util.Log;
 import com.xrci.standup.utility.LeaderBoardModel;
 import com.xrci.standup.utility.NotificationModel;
 import com.xrci.standup.utility.PostActivityDetailsModel;
+import com.xrci.standup.utility.PostNotificationModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,7 +30,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     // Database Name
     private static final String DATABASE_NAME = "db_standuo";
-    private final static int DB_VERSION = 11;
+    private final static int DB_VERSION = 12;
 
     // CLUSTER table name
     private static final String TABLE_ACTIVITY_LOG = "tbl_activity_log";
@@ -38,6 +39,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String TABLE_LEADERBOARD_LOG = "tbl_leaderboard_log";
     private static final String TABLE_COMPLIANCE_LOG = "tbl_compliance_log";
     private static final String TABLE_NOTIFICATION_RECORD = "tbl_notification_record";
+    private static final String TABLE_NOTIFICATION_SERVER = "tbl_notification_server";
     private static final String TABLE_FUSED_ACTIVITY_LOG = "tbl_fused_activity_log";
     private static final String TABLE_PENDING_SERVER_LOG = "tbl_pending_server_log";
 
@@ -87,6 +89,18 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             + KEY_ACTIVITY + " INTEGER,"
             + KEY_NOTIFICATION_TIME + " TEXT)";
 
+    private static final String KEY_TYPE = "typeId" ;
+    private static final String KEY_USER_ID = "userId" ;
+    private static final String KEY_STEPS = "steps";
+    private static final String KEY_SOURCE_ID = "sourceId" ;
+
+    private static String CREATE_NOTIFICATION_RECORD_SERVER = "CREATE TABLE IF NOT EXISTS " + TABLE_NOTIFICATION_SERVER + "("
+            + ROWID + " INTEGER PRIMARY KEY,"
+            + KEY_NOTIFICATION_MESSAGE + " TEXT,"
+            + KEY_TYPE + " INTEGER,"
+            + KEY_STEPS + " INTEGER,"
+            + KEY_SOURCE_ID + " INTEGER,"
+            + KEY_NOTIFICATION_TIME + " TEXT)";
 
     String CREATE_FUSED_LOG_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_FUSED_ACTIVITY_LOG + "("
             + ROWID + " INTEGER PRIMARY KEY," + KEY_ACTIVITY + " INTEGER,"
@@ -137,6 +151,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
             db.execSQL(CREATE_COMPLIANCE_TABLE);
             db.execSQL(CREATE_LEADERBOARD_TABLE);
+            db.execSQL(CREATE_FUSED_LOG_TABLE);
+            db.execSQL(CREATE_NOTIFICATION_RECORD_SERVER);
             //db.close();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -166,6 +182,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL(CREATE_COMPLIANCE_TABLE);
         db.execSQL(CREATE_PENDING_SERVER_TABLE);
         db.execSQL(CREATE_LEADERBOARD_TABLE);
+        db.execSQL(CREATE_NOTIFICATION_RECORD_SERVER);
 
 
     }
@@ -260,7 +277,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-
     public void clearPendingServerLog(){
         SQLiteDatabase db = this.getReadableDatabase();
         db.rawQuery("DELETE FROM " + TABLE_PENDING_SERVER_LOG, null).moveToFirst();
@@ -301,6 +317,41 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return postActivityDetailsModels;
+    }
+
+
+    public ArrayList<PostNotificationModel> getPostNotificaionModelFromNotificationLog(int userId){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = {KEY_NOTIFICATION_MESSAGE, KEY_TYPE, KEY_STEPS, KEY_NOTIFICATION_TIME };
+
+        Cursor cursor = db.query(TABLE_NOTIFICATION_SERVER, columns, null,null,null, null, null);
+        Log.i("check", "querying cursor size " +  cursor.getCount() );
+
+
+        ArrayList<PostNotificationModel> postNotificationModels = new ArrayList<PostNotificationModel>();
+        int messageIndex = cursor.getColumnIndex(KEY_NOTIFICATION_MESSAGE);
+        int typeIndex = cursor.getColumnIndex(KEY_TYPE);
+        int stepIndex = cursor.getColumnIndex(KEY_STEPS);
+        int notificationTimeIndex = cursor.getColumnIndex(KEY_NOTIFICATION_TIME);
+
+        while (cursor.moveToNext()) {
+            try {
+                int type = cursor.getInt(typeIndex);
+                int steps = cursor.getInt(stepIndex);
+                Date notificationTime = simpleDateFormat.parse(cursor.getString(notificationTimeIndex));
+                String message = cursor.getString(messageIndex);
+                Log.i("check", "adding query  " + message );
+                PostNotificationModel postNotificationModel = new PostNotificationModel(notificationTime, message, 1, userId, type, steps );
+                postNotificationModels.add(postNotificationModel);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        }
+        cursor.close();
+        db.close();
+        return postNotificationModels;
     }
 
     public ArrayList<LeaderBoardModel> getLeaderBoardModelFromDB(){
@@ -454,21 +505,24 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-    public void addNotification(Date notificationTimestamp, int sittingPeriod, int maxsittingPeriod) {
+    public void addNotification(Date notificationTimestamp, String message, int sourceId, int typeId, int steps) {
         SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SQLiteDatabase db = this.getWritableDatabase();
-
         ContentValues values = new ContentValues();
+        values.put(KEY_NOTIFICATION_MESSAGE, message);
+        values.put(KEY_SOURCE_ID, sourceId);
+        values.put(KEY_STEPS, steps);
+        values.put(KEY_TYPE, typeId);
+        values.put(KEY_NOTIFICATION_TIME, sf.format(notificationTimestamp));
+        long rowinserted = db.insert(TABLE_NOTIFICATION_SERVER, null, values);
+        System.out.println("Row inserted to notification: " + rowinserted);
+        db.close();
+    }
 
-        values.put(KEY_TIMESTAMP, sf.format(notificationTimestamp));
+    public void clearNotificationToServer() {
 
-        values.put(SITTINGTIME, sittingPeriod);
-        values.put(MAXSITTINGTIME, maxsittingPeriod);
-        //values.put(KEY_TIMESTAMP, );
-
-        values.put(SYNCED, 0);
-        long rowinserted = db.insert(TABLE_NOTIFICATION_ACTIVITY_LOG, null, values);
-        System.out.println("Row inserted: " + rowinserted);
+        SQLiteDatabase db = this.getReadableDatabase();
+        db.rawQuery("DELETE FROM " + TABLE_NOTIFICATION_SERVER, null).moveToFirst();
         db.close();
     }
 
@@ -1013,5 +1067,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
         return notificationModels;
     }
+
+
 }
 

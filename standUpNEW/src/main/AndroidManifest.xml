@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.xrci.standup"
-    android:versionCode="34"
-    android:versionName="1.33" >
+    android:versionCode="50"
+    android:versionName="1.49" >
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -69,8 +69,7 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
-            />
+            android:screenOrientation="portrait" />
 
         <service android:name=".ActivityMonitoringService" />
         <service
@@ -99,7 +98,6 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
         <receiver android:name=".AppUpdatedIntentReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
@@ -160,12 +158,19 @@
         </activity>
         <activity
             android:name=".FeedbackActivity"
-            android:label="Feedback!"  android:parentActivityName=".MainActivity"
+            android:label="Feedback!"
+            android:parentActivityName=".MainActivity"
             android:screenOrientation="portrait" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.xrci.standup.MainActivity" />
         </activity>
+
+        <!--<service-->
+            <!--android:name=".TrackStepService"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="true" >-->
+        <!--</service>-->
     </application>
 
 </manifest>

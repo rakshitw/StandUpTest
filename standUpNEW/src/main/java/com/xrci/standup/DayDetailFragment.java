@@ -100,7 +100,8 @@ public class DayDetailFragment extends Fragment {
 
     public class ShowFusedTimeline extends AsyncTask<Date, Void, DatedResponse> {
         Context context;
-        public  ShowFusedTimeline(Context context){
+
+        public ShowFusedTimeline(Context context) {
             this.context = context;
         }
 
@@ -173,6 +174,7 @@ public class DayDetailFragment extends Fragment {
             refreshFusedTimeLine(date);
         }
     }
+
     void refreshTimeLine(Context context, ArrayList<ActivityDetails> userActivities) {
         linearLayoutTimelineArea.removeAllViews();
         Date lastActivityEnd = null;
@@ -199,7 +201,7 @@ public class DayDetailFragment extends Fragment {
                 }
                 j = 1;
                 nextActivityDetail = userActivities.get(i + j);
-                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180*1000)
+                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180 * 1000)
                         && (i + j + 1) < userActivities.size() - 1) {
                     activityDetail.end = nextActivityDetail.end;
                     activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetail.timePeriod;
@@ -211,10 +213,12 @@ public class DayDetailFragment extends Fragment {
                 if (activityDetail.activityType != DetectedActivity.ON_FOOT && activityDetail.timePeriod < 180 * 1000) {
                     if (userActivities.get(i + 1).activityType != DetectedActivity.ON_FOOT) {
                         ActivityDetails nextActivityDetails = userActivities.get(i + 1);
-                        activityDetail.end = nextActivityDetails.end;
-                        activityDetail.activityType = nextActivityDetails.activityType;
-                        activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetails.timePeriod;
-                        i++;
+                        if (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 240 * 1000) {
+                            activityDetail.end = nextActivityDetails.end;
+                            activityDetail.activityType = nextActivityDetails.activityType;
+                            activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetails.timePeriod;
+                            i++;
+                        }
                     }
                 }
             }
@@ -261,6 +265,7 @@ public class DayDetailFragment extends Fragment {
 
         }
     }
+
     protected void refreshFusedTimeLine(Date date) {
 
         ArrayList<ActivityDetails> userActivities;
@@ -276,6 +281,7 @@ public class DayDetailFragment extends Fragment {
 
         }
     }
+
     private long getActivityTime(ActivityDetails activity) {
         return activity.end.getTime() - activity.start.getTime();
     }

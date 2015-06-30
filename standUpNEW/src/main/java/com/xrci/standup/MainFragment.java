@@ -78,7 +78,7 @@ public class MainFragment extends Fragment {
         currentCircle.invalidate();
 //        currentActivity.setText("On Foot");
         Log.i("check", "int updateSteps " + todaySteps);
-        if(!MainActivity.isGoalCircle){
+        if (!MainActivity.isGoalCircle) {
             stepCircle.setTextLine1(Integer.toString(todaySteps));
             stepCircle.invalidate();
         }
@@ -117,7 +117,7 @@ public class MainFragment extends Fragment {
         }
 //        currentActivityTimePeriod.setText("Since: " + since);
         currentCircle.invalidate();
-        if(!MainActivity.isGoalCircle) {
+        if (!MainActivity.isGoalCircle) {
             stepCircle.setTextLine1(Integer.toString(todaySteps));
             Log.i("check", "current activity steps today " + todaySteps);
             stepCircle.invalidate();
@@ -152,7 +152,7 @@ public class MainFragment extends Fragment {
                 }
                 j = 1;
                 nextActivityDetail = userActivities.get(i + j);
-                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180*1000)
+                while (activityDetail.activityType == nextActivityDetail.activityType && (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 180 * 1000)
                         && (i + j + 1) < userActivities.size() - 1) {
                     activityDetail.end = nextActivityDetail.end;
                     activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetail.timePeriod;
@@ -164,10 +164,12 @@ public class MainFragment extends Fragment {
                 if (activityDetail.activityType != DetectedActivity.ON_FOOT && activityDetail.timePeriod < 180 * 1000) {
                     if (userActivities.get(i + 1).activityType != DetectedActivity.ON_FOOT) {
                         ActivityDetails nextActivityDetails = userActivities.get(i + 1);
-                        activityDetail.end = nextActivityDetails.end;
-                        activityDetail.activityType = nextActivityDetails.activityType;
-                        activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetails.timePeriod;
-                        i++;
+                        if (nextActivityDetail.start.getTime() - activityDetail.end.getTime() <= 240 * 1000) {
+                            activityDetail.end = nextActivityDetails.end;
+                            activityDetail.activityType = nextActivityDetails.activityType;
+                            activityDetail.timePeriod = activityDetail.timePeriod + nextActivityDetails.timePeriod;
+                            i++;
+                        }
                     }
                 }
             }
@@ -184,7 +186,6 @@ public class MainFragment extends Fragment {
                 if ((activityDetail.start.getTime() - lastActivityEnd.getTime() > 300 * 1000)) // insert a blanktimeline element if more than one minute missing
 
                 {
-                    Log.i("Blank activity", "I am here");
                     BlankTimeLineElement blank = new BlankTimeLineElement(context);
                     linearLayoutTimelineArea.addView(blank, 0);
                     showStartTime = true;
@@ -214,7 +215,6 @@ public class MainFragment extends Fragment {
 
         }
     }
-
 
 
     private long getActivityTime(ActivityDetails activity) {

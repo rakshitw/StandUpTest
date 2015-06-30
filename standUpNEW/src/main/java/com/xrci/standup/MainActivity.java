@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.FragmentManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -71,6 +72,9 @@ public class MainActivity extends Activity {
     private BroadcastReceiver receiverGCM;
     private MainFragment fragment;
 
+    public static ProgressDialog progressDialog;
+
+
 
     // Rakshit 23-02-2015
 
@@ -127,7 +131,7 @@ public class MainActivity extends Activity {
         try {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.side_menu);
-
+            Log.i(TAG, "main activity created");
             // Initializing
             //dataList = new ArrayList<DrawerItem>();
             mTitle = mDrawerTitle = getTitle();
@@ -137,7 +141,7 @@ public class MainActivity extends Activity {
             mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow,
                     GravityCompat.START);
 
-
+            progressDialog = new ProgressDialog(this);
             dbHandler = new DatabaseHandler(this);
 
 //            dSc = (DailyStatisticsCircle) findViewById(R.id.dailyStatisiticsCircle);
@@ -185,6 +189,9 @@ public class MainActivity extends Activity {
                 Intent startStepService = new Intent(getApplicationContext(), StepService.class);
                 startService(startStepService);
             }
+
+
+
             setGoogleFitHandler();
             startListeningFromStepService();
             startListeningFromMonitoringService();
@@ -196,6 +203,9 @@ public class MainActivity extends Activity {
 //            broadcaster = LocalBroadcastManager.getInstance(this);
 //            broadcaster.sendBroadcast(currentDetail);
 
+
+            //Starting tracking alarm manager if not running
+//            checkAndStartTrackingAlarm();
 
         } catch (Exception e) {
             Logger.appendLog("Exception in onCreate(MainActivity):" + e.getMessage(), true);
@@ -214,6 +224,37 @@ public class MainActivity extends Activity {
         return false;
     }
 
+
+    //Added for tracking alarm manager
+
+    /**
+     * make sure that time for alarm is same in BootCompleteIntentReceiver.class also
+     */
+//    private void checkAndStartTrackingAlarm() {
+//        try {
+//            Context context = getApplicationContext();
+//            Intent intent = new Intent(context, TrackStepService.class);
+//            boolean isStarted = PendingIntent.getBroadcast(context, 0, intent,
+//                    PendingIntent.FLAG_NO_CREATE) != null;
+//            if (!isStarted) {
+//                Log.i(TAG, "tracking alarm not running , starting from main activity");
+//                Calendar cal = Calendar.getInstance();
+//                cal.add(Calendar.SECOND, 10);
+//                Intent trackServiceIntent = new Intent(context, TrackStepService.class);
+//
+//                PendingIntent pendingIntent = PendingIntent.getService(context, 0, trackServiceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//                AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+//                alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(),
+//                        3 * 60 * 1000, pendingIntent);
+//            } else
+//                Log.i(TAG, "tracking alarm already running");
+//        } catch (Exception e) {
+//            Log.i(TAG, "Exception in alarm tracking in main activity");
+//            e.printStackTrace();
+//        }
+//
+//    }
 
     // rakshit
 
@@ -254,6 +295,22 @@ public class MainActivity extends Activity {
                 }
             }
         };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        StepService.isMainInForeground = true;
+        refreshTimeLine();
+
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        StepService.isMainInForeground = false;
+
     }
 
     /**
